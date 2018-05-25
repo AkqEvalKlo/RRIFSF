@@ -41,8 +41,8 @@
 
 
 *****************************************************************
-* Letzte Aenderung :: 2018-04-05
-* Letzte Version   :: G.01.45
+* Letzte Aenderung :: 2018-05-24
+* Letzte Version   :: G.01.46
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -50,12 +50,15 @@
 * Kurzbeschreibung :: auf Termial-Nachrichten vom Typ 210 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: R7-272
+* Auftrag          :: RRIFSF-3
 *
 * Aenderungen
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar
+*-------|----------|-----|-------------------------------------------*
+*G.01.46|2018-05-24| kus | RRIFSF-3:
+*       |          |     | - Umsetzung Roadrunner (Routkz = 25)
 *-------|----------|-----|-------------------------------------------*
 *G.01.45|2018-04-05| kl  | R7-272:
 *       |          |     | Optimierung Zugriff / Laden FCPARAM
@@ -273,8 +276,8 @@
 * D317-UTA
 * D318-TND
 * D322-EUROWAG
-* D324-LOGPAY
-* D326-STIGLECHNER
+* D323-LOGPAY
+* D324-STIGLECHNER
 *
 * E300-ARTIKELDATEN
 * E900-PUT-ERRLOG
@@ -851,6 +854,10 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
+*G.01.46 - Roadrunner neu
+          88 VERF-RR                         VALUE 25.
+*G.01.46 - Ende
+
 **          ---> Verfahrensfestlegung AS-MAC-Berechnung
  01          AS-VERF             PIC X(02).
           88 AS-VERF-DK                      VALUE "DK".
@@ -868,6 +875,9 @@
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
           88 AS-VERF-TN                      VALUE "TN".
+*G.01.46 - Roadrunner neu
+          88 AS-VERF-RR                      VALUE "RR".
+*G.01.46 - Ende
 
           88 AS-VERF-DEFAULT                 VALUE "SL".
 
@@ -1363,6 +1373,9 @@
          WHEN VERF-TN    MOVE "TN" TO APPL-KZ of IFSFAC
          WHEN VERF-TO    MOVE "TO" TO APPL-KZ of IFSFAC
          WHEN VERF-UT    MOVE "UT" TO APPL-KZ of IFSFAC
+*G.01.46 - Roadrunner neu
+         WHEN VERF-RR    MOVE "RR" TO APPL-KZ of IFSFAC
+*G.01.46 - Ende
 
          WHEN OTHER      MOVE "Verfahren für AC-Mapping kann nicht bestimmt werden"
                              TO DATEN-BUFFER1
@@ -2520,12 +2533,15 @@
 *G.01.11 - Ende
 
 *G.01.13 - Anfang
-         WHEN 23     PERFORM D324-LOGPAY
+         WHEN 23     PERFORM D323-LOGPAY
 *G.01.13 - Ende
 
 *G.01.40 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
+         WHEN 24     PERFORM D324-STIGLECHNER
 *G.01.40 - Ende
+*G.01.46 - Roadrunner neu
+         WHEN 25     PERFORM D325-ROADRUNNER
+*G.01.46 - Ende
 
          WHEN OTHER
                  SET ENDE TO TRUE
@@ -2766,13 +2782,13 @@
 ******************************************************************
 * spezielle Behandlung für das LogPay-AS
 ******************************************************************
- D324-LOGPAY SECTION.
- D324-00.
+ D323-LOGPAY SECTION.
+ D323-00.
 
      CONTINUE
      .
 
- D324-99.
+ D323-99.
      EXIT.
 
 *G.01.13 - Ende
@@ -2782,18 +2798,31 @@
 ******************************************************************
 * spezielle Behandlung für das Stiglechner-AS
 ******************************************************************
- D326-STIGLECHNER SECTION.
- D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
 
      SET W66-DKV TO TRUE
 
      CONTINUE
      .
 
- D326-99.
+ D324-99.
      EXIT.
 
 *G.01.40 - Ende
+
+******************************************************************
+* spezielle Behandlung für das Roadrunner-AS
+*G.01.46 - neu
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+
+     CONTINUE
+     .
+
+ D325-99.
+     EXIT.
 
 ******************************************************************
 * Aufruf Artikelmapper
@@ -2854,6 +2883,10 @@
 *G.01.40 - Anfang
          WHEN 24  MOVE "IQ" TO AMP-FORMAT
 *G.01.40 - Ende
+
+*G.01.46 - Roadrunner neu
+         WHEN 25  MOVE "RR" TO AMP-FORMAT
+*G.01.46 - Ende
 
          WHEN OTHER
               CONTINUE

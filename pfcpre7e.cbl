@@ -58,8 +58,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-05-18
-* Letzte Version   :: G.06.54
+* Letzte Aenderung :: 2018-05-24
+* Letzte Version   :: G.06.55
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protok.
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -67,14 +67,17 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1200 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: R7-269
+* Auftrag          :: RRIFSF-3
 *
 * Aenderungen
 *
 *---------------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                        *
-*-------|----------|-----|----------------------------------------*
-*G.01.25|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
+*-------|----------|-----|--------------------------------------------------*
+*G.06.55|20180524  | kus | RRIFSF-3:
+*       |          |     | - Umsetzung Roadrunner (Routkz = 25)
+*-------|----------|-----|--------------------------------------------------*
+*G.06.54|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
 *       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|--------------------------------------------------*
 *G.06.53|2018-04-30| kus | F1ICC-104:
@@ -253,6 +256,7 @@
 *    -   EUROWAG
 *    -   LOGPAY
 *    -   STIGLECHNER
+*    -   ROADRUNNER
 *
 * Für jedes AS muss eine eigene Serverklasse mit diesem Programm
 * definiert werden (z.B. PFCPRE7S-05 für Avia). Die Keys für das
@@ -306,8 +310,9 @@
 * D317-UTA
 * D318-TND
 * D322-EUROWAG
-* D324-LOGPAY
-* D326-STIGLECHNER
+* D323-LOGPAY
+* D324-STIGLECHNER
+* D325-ROADRUNNER
 * D900-GET-CARDID
 * D910-GET-ASTRACENR
 * D950-EMV-VERARBEITUNG
@@ -824,6 +829,9 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
+*G.06.55 - Verfahren Roadrunner neu
+          88 VERF-RR                         VALUE 25.
+*G.06.55 - Ende
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -848,6 +856,9 @@
           88 AS-VERF-TN                      VALUE "TN".
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
+*G.06.55 - Verfahren Roadrunner neu
+          88 AS-VERF-RR                      VALUE "RR".
+*G.06.55 - Ende
 
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
@@ -2522,15 +2533,19 @@
 
 *G.01.14 - Anfang
          WHEN 22     PERFORM D322-EUROWAG
-*G.01.14 - Anfang
+*G.01.14 - Ende
 
 *G.01.17 - Anfang
-         WHEN 23     PERFORM D324-LOGPAY
-*G.01.17 - Anfang
+         WHEN 23     PERFORM D323-LOGPAY
+*G.01.17 - Ende
 
 *G.06.48 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
-*G.06.48 - Anfang
+         WHEN 24     PERFORM D324-STIGLECHNER
+*G.06.48 - Ende
+
+*G.06.55 - Roadrunner AS neu
+         WHEN 25     PERFORM D325-ROADRUNNER
+*G.06.55 - Ende
 
          WHEN OTHER
                  SET ENDE TO TRUE
@@ -3215,8 +3230,8 @@
 * ggf. mit Hilfe der Parameter aus Tabelle =FCPARAM
 ******************************************************************
 
- D324-LOGPAY SECTION.
- D324-00.
+ D323-LOGPAY SECTION.
+ D323-00.
 
 ** Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
@@ -3262,7 +3277,7 @@
      END-IF
      .
 
- D324-99.
+ D323-99.
      EXIT.
 
 *G.01.17 - Ende
@@ -3274,8 +3289,8 @@
 * ggf. mit Hilfe der Parameter aus Tabelle =FCPARAM
 ******************************************************************
 
- D326-STIGLECHNER SECTION.
- D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
 
 ** Anwendung für MAC-Bildung setzen
 **   SET W66-DEFAULT TO TRUE
@@ -3289,10 +3304,55 @@
      END-IF
      .
 
- D326-99.
+ D324-99.
      EXIT.
 
 *G.06.48 - Ende
+
+******************************************************************
+* spezielle Behandlung für das Roadrunner-AS
+*G.06.55 - neu
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+**  ---> Anwendung für MAC-Bildung setzen
+     SET W66-DEFAULT TO TRUE
+
+**  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
+**  --->          noch Fahrerdaten, die einzustellen sind (48.8))
+**  --->          !!! bei Roadrunner allerdings nicht !!!
+**  ---> zunächst die BitMap erstellen
+     MOVE ALL ZEROES TO W-BYTEMAP-48
+     MOVE "1"        TO W-BYTEMAP-48(4:1)
+     MOVE "1"        TO W-BYTEMAP-48(14:1)
+     IF  GEODATA-YES
+         MOVE "1"    TO W-BYTEMAP-48(41:1)
+     END-IF
+     MOVE  LOW-VALUE TO W-BITMAP
+     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+     MOVE 8        TO W-BUFFER-LEN
+     MOVE W-BITMAP TO W-BUFFER
+
+**  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
+     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
+     ADD 12 TO W-BUFFER-LEN
+
+     IF  GEODATA-YES
+         MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
+         ADD 20 TO W-BUFFER-LEN
+     END-IF
+
+**  +++> jetzt in die Nachricht einbauen
+     MOVE 48           TO W207-XBMP
+     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+     MOVE W-BUFFER     TO W207-XCOBVAL
+     PERFORM L100-ADD-BMP
+     IF  ENDE
+         EXIT SECTION
+     END-IF
+     .
+ D325-99.
+     EXIT.
 
 ******************************************************************
 * bestimmen CARDID
@@ -3713,6 +3773,10 @@
 *G.06.48 - Anfang
          WHEN 24  MOVE "IQ" TO AMP-FORMAT
 *G.06.48 - Ende
+
+*G.06.55 - Roadrunner neu
+         WHEN 25  MOVE "RR" TO AMP-FORMAT
+*G.06.55 - Ende
 
          WHEN OTHER
               CONTINUE
