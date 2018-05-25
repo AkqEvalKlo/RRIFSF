@@ -45,8 +45,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2018-05-18
-* Letzte Version   :: G.01.09
+* Letzte Aenderung :: 2018-05-25
+* Letzte Version   :: G.01.10
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -54,15 +54,19 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1420 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: R7-269
+* Auftrag          :: RRIFSF-4
 *
 * Aenderungen:
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
-*-------|---------|-----|----------------------------------------*
-*G.01.09|20180518 | kl  | Neukompilierung wg. Korrektur ZPVERKM
-*       |         |     | (ZP-VERKAUF Modul)
+*-------|----------|-----|---------------------------------------*
+*G.01.10|2018-05-25| kl  | RRIFSF-4:
+*       |          |     | - Neues FK-AS: Road Runner (RK=25)
+*       |          |     |   (Vereinbarung: Identisch WEAT AS 2)
+*-------|----------|-----|----------------------------------------*
+*G.01.09|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
+*       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|---------------------------------------*
 *G.01.08|2018-04-30| kus | F1ICC-105:
 *       |          |     | - AS BMP 12 fuellen mit ZP vom Terminal
@@ -826,10 +830,6 @@
           88 VERF-EU                         VALUE 22.
 *G.00.14 - Ende
 
-*G.01.02 - Anfang
-          88 VERF-IQ                         VALUE 24.
-*G.01.02 - Ende
-
 *G.00.18 - Anfang
           88 VERF-LO                         VALUE 23.
 *G.00.18 - Ende
@@ -840,6 +840,15 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
+          
+*G.01.02 - Anfang
+          88 VERF-IQ                         VALUE 24.
+*G.01.02 - Ende
+
+*kl20180525 - G.01.10 - Integration Roadrunner AS
+          88 VERF-RR                         VALUE 25.
+*kl20180525 - G.01.10 - Ende
+          
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -852,10 +861,6 @@
           88 AS-VERF-EU                      VALUE "EU".
 *G.00.14 - Ende
 
-*G.01.02 - Anfang
-          88 AS-VERF-IQ                      VALUE "IQ".
-*G.01.02 - Ende
-
 *G.00.18 - Anfang
           88 AS-VERF-LO                      VALUE "LO".
 *G.00.18 - Ende
@@ -865,6 +870,15 @@
           88 AS-VERF-TN                      VALUE "TN".
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
+
+*G.01.02 - Anfang
+          88 AS-VERF-IQ                      VALUE "IQ".
+*G.01.02 - Ende
+
+*kl20180525 - G.01.10 - Integration Roadrunner AS
+          88 AS-VERF-RR                      VALUE "RR".
+*kl20180525 - G.01.10 - Ende
+                 
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
 **          ---> Parametertabelle für Autorisierungssystem
@@ -1330,6 +1344,13 @@
 *         WHEN VERF-TN    SET AS-VERF-TN TO TRUE
          WHEN VERF-TO    SET AS-VERF-TO TO TRUE
          WHEN VERF-UT    SET AS-VERF-UT TO TRUE
+*G.01.02 - Anfang
+         WHEN VERF-IQ    SET AS-VERF-IQ TO TRUE
+*G.01.02 - Ende
+
+*kl20180525 - G.01.10 - Integration Roadrunner AS
+         WHEN VERF-RR    SET AS-VERF-RR TO TRUE
+*kl20180525 - G.01.10 - Integration Roadrunner AS
 
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
 
@@ -2230,9 +2251,15 @@
 *G.00.18 - Anfang
 
 *G.01.02 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
+*kl20180525 - G.01.10 - D[Routkennzeichen]-[AS] !!!
+*         WHEN 24     PERFORM D326-STIGLECHNER
+         WHEN 24     PERFORM D324-STIGLECHNER
 *G.01.02 - Anfang
 
+*kl20180525 - G.01.10 - Integration Roadrunner AS
+         WHEN 25     PERFORM D325-ROADRUNNER
+*kl20180525 - G.01.10 - Integration Roadrunner AS
+         
          WHEN OTHER
                  SET ENDE TO TRUE
                  MOVE W-ROUTKZ TO D-NUM4
@@ -2920,8 +2947,13 @@
 * spezielle Behandlung für das LogPay-AS
 * ggf. mit Hilfe der Parameter aus Tabelle =FCPARAM
 ******************************************************************
- D326-STIGLECHNER SECTION.
- D326-00.
+*kl20180525 - G.01.10 - D[Routkennzeichen]-[AS] !!!         
+* D326-STIGLECHNER SECTION.
+* D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
+*kl20180525 - G.01.10 - D[Routkennzeichen]-[AS] !!!
+ 
 **  ---> Anwendung für MAC-Bildung setzen
 **   SET W66-DEFAULT TO TRUE
      SET W66-DKV     TO TRUE
@@ -2955,10 +2987,49 @@
 **  ---> und BMP48 aufbereiten
      PERFORM E310-BMP48-DEFAULT
      .
- D326-99.
+ D324-99.
      EXIT.
-
 *G.01.02 - Ende
+
+*kl20180525 - G.01.10 - Integration Roadrunner AS (voerst lt.
+*                       Vereinbarung identsich zu AVIA)
+******************************************************************
+* spezielle Behandlung für das RoadRunner-AS
+*    ggf. mit Hilfe der Parameter aus Tabelle =FCPARAM
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+**  ---> Anwendung für MAC-Bildung setzen
+     SET W66-DEFAULT TO TRUE
+
+**  ---> BMP 14 - Ablaufdatum
+     MOVE 14   TO S-BMP
+     MOVE 1    TO S-LFDNR
+     PERFORM U300-SEARCH-TAB
+     IF  PRM-FOUND
+         IF  T-KZ-ABWEICHUNG (T-AKT-IND) = "0"
+             MOVE ZERO TO W207-TBMP-O (14:1)
+         END-IF
+     END-IF
+
+     IF  OFFLINE-BUCHUNG OF BUCHUNGS-FLAG
+     AND GENNR           OF TXILOG70-AUT NOT = SPACES
+         MOVE 38                    TO W207-XBMP
+         MOVE GENNR OF TXILOG70-AUT TO W207-XCOBVAL
+         MOVE 6                     TO W207-XCOBLEN
+         PERFORM L100-ADD-BMP
+         IF  ENDE
+             EXIT SECTION
+         END-IF
+     ELSE
+       MOVE ZERO TO W207-TBMP(38)
+     END-IF
+
+**  ---> und BMP48 aufbereiten
+     PERFORM E310-BMP48-DEFAULT
+     .
+ D325-99.
+     EXIT.
 
 ******************************************************************
 * bestimmen Routing etc
