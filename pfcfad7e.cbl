@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2018-05-18
-* Letzte Version   :: G.02.47
+* Letzte Aenderung :: 2018-05-25
+* Letzte Version   :: G.02.48
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -59,7 +59,7 @@
 * Kurzbeschreibung :: 400/AbWkz=95, die auf AS-Nachrichten
 * Kurzbeschreibung :: vom Typ 1220 umgesetzt werden.
 * Package          :: ICC
-* Auftrag          :: R7-269
+* Auftrag          :: RRIFSF-3
 
 
 *
@@ -67,9 +67,12 @@
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
-*-------|---------|-----|----------------------------------------*
-*G.02.47|20180518 | kl  | Neukompilierung wg. Korrektur ZPVERKM
-*       |         |     | (ZP-VERKAUF Modul)
+*-------|----------|-----|---------------------------------------*
+*G.02.48|2018-05-25| kus | RRIFSF-3:
+*       |          |     | - Umsetzung Roadrunner (Routkz = 25)
+*-------|----------|-----|---------------------------------------*
+*G.02.47|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
+*       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|---------------------------------------*
 *G.02.46|2018-04-30| kus | F1ICC-106:
 *       |          |     | - AS BMP 12 fuellen mit ZP vom Terminal
@@ -312,7 +315,8 @@
 * D318-TND
 * D322-EUROWAG
 * D323-LOGPAY
-* D326-STIGLECHNER
+* D324-STIGLECHNER
+* D325-ROADRUNNER
 * D900-ROUTING-ETC
 * D910-GET-ASTRACENR
 *
@@ -858,6 +862,9 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
+*G.01.XX - Roadrunner neu
+          88 VERF-RR                         VALUE 25.
+*G.01.XX - Ende
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -882,6 +889,9 @@
           88 AS-VERF-TN                      VALUE "TN".
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
+*G.01.XX - Roadrunner neu
+          88 AS-VERF-RR                      VALUE "RR".
+*G.01.XX - Ende
 
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
@@ -2428,15 +2438,19 @@
 
 *G.02.09 - Anfang
          WHEN 22     PERFORM D322-EUROWAG
-*G.02.09 - Anfang
+*G.02.09 - Ende
 
 *G.02.13 - Anfang
          WHEN 23     PERFORM D323-LOGPAY
-*G.02.13 - Anfang
+*G.02.13 - Ende
 
 *G.02.37 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
-*G.02.37 - Anfang
+         WHEN 24     PERFORM D324-STIGLECHNER
+*G.02.37 - Ende
+
+*G.01.XX - Roadrunner neu
+         WHEN 25     PERFORM D325-ROADRUNNER
+*G.01.XX - Ende
 
          WHEN OTHER
                  SET ENDE TO TRUE
@@ -2968,8 +2982,8 @@
 ******************************************************************
 * Spezielle Behandlung für das Stiglechner-AS
 ******************************************************************
- D326-STIGLECHNER SECTION.
- D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
 **  ---> Anwendung für MAC-Bildung setzen
 **   SET W66-DEFAULT TO TRUE
      SET W66-DKV TO TRUE
@@ -3034,10 +3048,36 @@
 *     PERFORM E310-BMP48-DEFAULT
 *G.02.41 - Ende
      .
- D326-99.
+ D324-99.
      EXIT.
 
 *G.02.37 - Ende
+
+******************************************************************
+* spezielle Behandlung für das Roadrunner-AS
+*G.01.XX - neu
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+**  ---> Anwendung für MAC-Bildung setzen
+     SET W66-DEFAULT TO TRUE
+
+**  ---> BMP 14 - Ablaufdatum
+     MOVE 14   TO S-BMP
+     MOVE 1    TO S-LFDNR
+     PERFORM U300-SEARCH-TAB
+     IF  PRM-FOUND
+         IF  T-KZ-ABWEICHUNG (T-AKT-IND) = "0"
+             MOVE ZERO TO W207-TBMP-O (14:1)
+         END-IF
+     END-IF
+
+
+**  ---> und BMP48 aufbereiten
+     PERFORM E310-BMP48-DEFAULT
+     .
+ D325-99.
+     EXIT.
 
 ******************************************************************
 * bestimmen Routing etc
@@ -3428,6 +3468,10 @@
 *G.02.37 - Anfang
          WHEN 24     MOVE "IQ" TO AMP-FORMAT
 *G.02.37 - Ende
+
+*G.01.XX - Roadrunner neu
+         WHEN 25     MOVE "RR" TO AMP-FORMAT
+*G.01.XX - Ende
 
          WHEN OTHER
               CONTINUE
