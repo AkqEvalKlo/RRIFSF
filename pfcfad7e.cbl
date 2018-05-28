@@ -866,9 +866,9 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
-*G.01.XX - Roadrunner neu
+*G.02.49 - Roadrunner neu
           88 VERF-RR                         VALUE 25.
-*G.01.XX - Ende
+*G.02.49 - Ende
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -893,9 +893,9 @@
           88 AS-VERF-TN                      VALUE "TN".
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
-*G.01.XX - Roadrunner neu
+*G.02.49 - Roadrunner neu
           88 AS-VERF-RR                      VALUE "RR".
-*G.01.XX - Ende
+*G.02.49 - Ende
 
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
@@ -2456,9 +2456,9 @@
          WHEN 24     PERFORM D324-STIGLECHNER
 *G.02.37 - Ende
 
-*G.01.XX - Roadrunner neu
+*G.02.49 - Roadrunner neu
          WHEN 25     PERFORM D325-ROADRUNNER
-*G.01.XX - Ende
+*G.02.49 - Ende
 
          WHEN OTHER
                  SET ENDE TO TRUE
@@ -3063,7 +3063,7 @@
 
 ******************************************************************
 * spezielle Behandlung für das Roadrunner-AS
-*G.01.XX - neu
+*G.02.49 - neu
 ******************************************************************
  D325-ROADRUNNER SECTION.
  D325-00.
@@ -3477,9 +3477,9 @@
          WHEN 24     MOVE "IQ" TO AMP-FORMAT
 *G.02.37 - Ende
 
-*G.01.XX - Roadrunner neu
+*G.02.49 - Roadrunner neu
          WHEN 25     MOVE "RR" TO AMP-FORMAT
-*G.01.XX - Ende
+*G.02.49 - Ende
 
          WHEN OTHER
               CONTINUE
