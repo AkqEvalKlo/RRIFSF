@@ -45,8 +45,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2018-05-18
-* Letzte Version   :: G.01.09
+* Letzte Aenderung :: 2018-05-25
+* Letzte Version   :: G.01.10
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -54,15 +54,19 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1420 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: R7-269
+* Auftrag          :: F1ICC-114
 *
 * Aenderungen:
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
-*-------|---------|-----|----------------------------------------*
-*G.01.09|20180518 | kl  | Neukompilierung wg. Korrektur ZPVERKM
-*       |         |     | (ZP-VERKAUF Modul)
+*-------|--------- |-----|---------------------------------------*
+*G.01.10|2018-05-25| kus | F1ICC-114:
+*       |          |     | - BMP 56 mit BMP12+13 (ZP-VERKAUF) aus
+*       |          |     |   Anfrage fuellen
+*-------|----------|-----|---------------------------------------*
+*G.01.09|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
+*       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|---------------------------------------*
 *G.01.08|2018-04-30| kus | F1ICC-105:
 *       |          |     | - AS BMP 12 fuellen mit ZP vom Terminal
@@ -2136,8 +2140,10 @@
      MOVE 56     TO W207-XBMP
      MOVE SPACES TO W207-XCOBVAL
      MOVE 1 TO C4-PTR
-     MOVE TAL-JHJJ OF TAL-TIME-D (3:2) TO D-NUM2
-     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+*G.01.10 - BMP 12+13(ZP-VERKAUF) aus Autorisierung verwenden
+*     MOVE TAL-JHJJ of TAL-TIME-D (3:2) TO D-NUM2
+*     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+     COMPUTE D-NUM12 = ZP-VERKAUF OF TXILOG70-AUT - 20000000000000
 
 *G.00.27 - Anfang
 *    STRING  "1200"
@@ -2162,12 +2168,14 @@
      STRING  D-NUM4M
 *G.00.27 - Ende
              TRACENR-AS OF TXILOG70-AUT
-             D-NUM2
-             D-NUM10
+*             D-NUM2
+*             D-NUM10
+             D-NUM12
                  delimited by size
        INTO  W207-XCOBVAL
        WITH  POINTER C4-PTR
      END-STRING
+*G.01.10 - Ende
      COMPUTE W207-XCOBLEN = C4-PTR - 1
      PERFORM L100-ADD-BMP
      IF  ENDE
