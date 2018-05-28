@@ -50,7 +50,7 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2018-05-25
+* Letzte Aenderung :: 2018-05-28
 * Letzte Version   :: G.02.49
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
@@ -68,7 +68,7 @@
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
-*G.02.49|2018-05-25| kus | RRIFSF-3:
+*G.02.49|2018-05-28| kus | RRIFSF-3:
 *       |          |     | - Umsetzung Roadrunner (Routkz = 25)
 *-------|----------|-----|---------------------------------------*
 *G.02.48|2018-05-25| kus | F1ICC-114:
