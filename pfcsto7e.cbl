@@ -54,17 +54,21 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1420 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: RRIFSF-4
+* Auftrag          :: F1ICC-114
 *
 * Aenderungen:
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
-*-------|----------|-----|---------------------------------------*
-*G.01.10|2018-05-25| kl  | RRIFSF-4:
+*-------|--------- |-----|---------------------------------------*
+*G.01.11|2018-05-25| kl  | RRIFSF-4:
 *       |          |     | - Neues FK-AS: Road Runner (RK=25)
 *       |          |     |   (Vereinbarung: Identisch WEAT AS 2)
 *-------|----------|-----|----------------------------------------*
+*G.01.10|2018-05-25| kus | F1ICC-114:
+*       |          |     | - BMP 56 mit BMP12+13 (ZP-VERKAUF) aus
+*       |          |     |   Anfrage fuellen
+*-------|----------|-----|---------------------------------------*
 *G.01.09|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
 *       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|---------------------------------------*
@@ -830,6 +834,7 @@
           88 VERF-EU                         VALUE 22.
 *G.00.14 - Ende
 
+
 *G.00.18 - Anfang
           88 VERF-LO                         VALUE 23.
 *G.00.18 - Ende
@@ -845,9 +850,9 @@
           88 VERF-IQ                         VALUE 24.
 *G.01.02 - Ende
 
-*kl20180525 - G.01.10 - Integration Roadrunner AS
+*kl20180525 - G.01.11 - Integration Roadrunner AS
           88 VERF-RR                         VALUE 25.
-*kl20180525 - G.01.10 - Ende
+*kl20180525 - G.01.11 - Ende
           
 
 **          ---> Verfahrensfestlegung für Artikelmapper
@@ -875,9 +880,9 @@
           88 AS-VERF-IQ                      VALUE "IQ".
 *G.01.02 - Ende
 
-*kl20180525 - G.01.10 - Integration Roadrunner AS
+*kl20180525 - G.01.11 - Integration Roadrunner AS
           88 AS-VERF-RR                      VALUE "RR".
-*kl20180525 - G.01.10 - Ende
+*kl20180525 - G.01.11 - Ende
                  
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
@@ -1332,10 +1337,6 @@
          WHEN VERF-EU    SET AS-VERF-EU TO TRUE
 *G.00.14 - Ende
 
-*G.01.02 - Anfang
-         WHEN VERF-IQ    SET AS-VERF-IQ TO TRUE
-*G.01.02 - Ende
-
 *G.00.18 - Anfang
          WHEN VERF-LO    SET AS-VERF-LO TO TRUE
 *G.00.18 - Ende
@@ -1348,9 +1349,9 @@
          WHEN VERF-IQ    SET AS-VERF-IQ TO TRUE
 *G.01.02 - Ende
 
-*kl20180525 - G.01.10 - Integration Roadrunner AS
+*kl20180525 - G.01.11 - Integration Roadrunner AS
          WHEN VERF-RR    SET AS-VERF-RR TO TRUE
-*kl20180525 - G.01.10 - Integration Roadrunner AS
+*kl20180525 - G.01.11 - Integration Roadrunner AS
 
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
 
@@ -2157,8 +2158,10 @@
      MOVE 56     TO W207-XBMP
      MOVE SPACES TO W207-XCOBVAL
      MOVE 1 TO C4-PTR
-     MOVE TAL-JHJJ OF TAL-TIME-D (3:2) TO D-NUM2
-     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+*G.01.10 - BMP 12+13(ZP-VERKAUF) aus Autorisierung verwenden
+*     MOVE TAL-JHJJ of TAL-TIME-D (3:2) TO D-NUM2
+*     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+     COMPUTE D-NUM12 = ZP-VERKAUF OF TXILOG70-AUT - 20000000000000
 
 *G.00.27 - Anfang
 *    STRING  "1200"
@@ -2183,12 +2186,14 @@
      STRING  D-NUM4M
 *G.00.27 - Ende
              TRACENR-AS OF TXILOG70-AUT
-             D-NUM2
-             D-NUM10
+*             D-NUM2
+*             D-NUM10
+             D-NUM12
                  delimited by size
        INTO  W207-XCOBVAL
        WITH  POINTER C4-PTR
      END-STRING
+*G.01.10 - Ende
      COMPUTE W207-XCOBLEN = C4-PTR - 1
      PERFORM L100-ADD-BMP
      IF  ENDE
