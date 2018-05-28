@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2018-05-18
-* Letzte Version   :: G.02.47
+* Letzte Aenderung :: 2018-05-28
+* Letzte Version   :: G.02.49
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -59,7 +59,7 @@
 * Kurzbeschreibung :: 400/AbWkz=95, die auf AS-Nachrichten
 * Kurzbeschreibung :: vom Typ 1220 umgesetzt werden.
 * Package          :: ICC
-* Auftrag          :: R7-269
+* Auftrag          :: RRIFSF-3
 
 
 *
@@ -67,9 +67,16 @@
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
-*-------|---------|-----|----------------------------------------*
-*G.02.47|20180518 | kl  | Neukompilierung wg. Korrektur ZPVERKM
-*       |         |     | (ZP-VERKAUF Modul)
+*-------|----------|-----|---------------------------------------*
+*G.02.49|2018-05-28| kus | RRIFSF-3:
+*       |          |     | - Umsetzung Roadrunner (Routkz = 25)
+*-------|----------|-----|---------------------------------------*
+*G.02.48|2018-05-25| kus | F1ICC-114:
+*       |          |     | - BMP 56 mit BMP12+13 (ZP-VERKAUF) aus
+*       |          |     |   Anfrage fuellen
+*-------|----------|-----|---------------------------------------*
+*G.02.47|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
+*       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|---------------------------------------*
 *G.02.46|2018-04-30| kus | F1ICC-106:
 *       |          |     | - AS BMP 12 fuellen mit ZP vom Terminal
@@ -312,7 +319,8 @@
 * D318-TND
 * D322-EUROWAG
 * D323-LOGPAY
-* D326-STIGLECHNER
+* D324-STIGLECHNER
+* D325-ROADRUNNER
 * D900-ROUTING-ETC
 * D910-GET-ASTRACENR
 *
@@ -858,6 +866,9 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
+*G.02.49 - Roadrunner neu
+          88 VERF-RR                         VALUE 25.
+*G.02.49 - Ende
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -882,6 +893,9 @@
           88 AS-VERF-TN                      VALUE "TN".
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
+*G.02.49 - Roadrunner neu
+          88 AS-VERF-RR                      VALUE "RR".
+*G.02.49 - Ende
 
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
@@ -2297,16 +2311,20 @@
      MOVE 56     TO W207-XBMP
      MOVE SPACES TO W207-XCOBVAL
      MOVE 1 TO C4-PTR
-     MOVE TAL-JHJJ of TAL-TIME-D (3:2) TO D-NUM2
-     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+*G.02.48 - BMP 12+13(ZP-VERKAUF) aus Autorisierung verwenden
+*     MOVE TAL-JHJJ of TAL-TIME-D (3:2) TO D-NUM2
+*     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+     COMPUTE D-NUM12 = ZP-VERKAUF OF TXILOG70-AUT - 20000000000000
      STRING  "1100"
              TRACENR-AS of TXILOG70-AUT
-             D-NUM2
-             D-NUM10
+*             D-NUM2
+*             D-NUM10
+             D-NUM12
                  delimited by size
        INTO  W207-XCOBVAL
        WITH  POINTER C4-PTR
      END-STRING
+*G.02.48 - Ende
      COMPUTE W207-XCOBLEN = C4-PTR - 1
      PERFORM L100-ADD-BMP
      IF  ENDE
@@ -2428,15 +2446,19 @@
 
 *G.02.09 - Anfang
          WHEN 22     PERFORM D322-EUROWAG
-*G.02.09 - Anfang
+*G.02.09 - Ende
 
 *G.02.13 - Anfang
          WHEN 23     PERFORM D323-LOGPAY
-*G.02.13 - Anfang
+*G.02.13 - Ende
 
 *G.02.37 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
-*G.02.37 - Anfang
+         WHEN 24     PERFORM D324-STIGLECHNER
+*G.02.37 - Ende
+
+*G.02.49 - Roadrunner neu
+         WHEN 25     PERFORM D325-ROADRUNNER
+*G.02.49 - Ende
 
          WHEN OTHER
                  SET ENDE TO TRUE
@@ -2968,8 +2990,8 @@
 ******************************************************************
 * Spezielle Behandlung für das Stiglechner-AS
 ******************************************************************
- D326-STIGLECHNER SECTION.
- D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
 **  ---> Anwendung für MAC-Bildung setzen
 **   SET W66-DEFAULT TO TRUE
      SET W66-DKV TO TRUE
@@ -3034,10 +3056,36 @@
 *     PERFORM E310-BMP48-DEFAULT
 *G.02.41 - Ende
      .
- D326-99.
+ D324-99.
      EXIT.
 
 *G.02.37 - Ende
+
+******************************************************************
+* spezielle Behandlung für das Roadrunner-AS
+*G.02.49 - neu
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+**  ---> Anwendung für MAC-Bildung setzen
+     SET W66-DEFAULT TO TRUE
+
+**  ---> BMP 14 - Ablaufdatum
+     MOVE 14   TO S-BMP
+     MOVE 1    TO S-LFDNR
+     PERFORM U300-SEARCH-TAB
+     IF  PRM-FOUND
+         IF  T-KZ-ABWEICHUNG (T-AKT-IND) = "0"
+             MOVE ZERO TO W207-TBMP-O (14:1)
+         END-IF
+     END-IF
+
+
+**  ---> und BMP48 aufbereiten
+     PERFORM E310-BMP48-DEFAULT
+     .
+ D325-99.
+     EXIT.
 
 ******************************************************************
 * bestimmen Routing etc
@@ -3428,6 +3476,10 @@
 *G.02.37 - Anfang
          WHEN 24     MOVE "IQ" TO AMP-FORMAT
 *G.02.37 - Ende
+
+*G.02.49 - Roadrunner neu
+         WHEN 25     MOVE "RR" TO AMP-FORMAT
+*G.02.49 - Ende
 
          WHEN OTHER
               CONTINUE
