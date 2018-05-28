@@ -51,7 +51,7 @@
 
 ******************************************************************
 * Letzte Aenderung :: 2018-05-25
-* Letzte Version   :: G.02.48
+* Letzte Version   :: G.02.49
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -68,8 +68,12 @@
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
-*G.02.48|2018-05-25| kus | RRIFSF-3:
+*G.02.49|2018-05-25| kus | RRIFSF-3:
 *       |          |     | - Umsetzung Roadrunner (Routkz = 25)
+*-------|----------|-----|---------------------------------------*
+*G.02.48|2018-05-25| kus | F1ICC-114:
+*       |          |     | - BMP 56 mit BMP12+13 (ZP-VERKAUF) aus
+*       |          |     |   Anfrage fuellen
 *-------|----------|-----|---------------------------------------*
 *G.02.47|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
 *       |          |     | (ZP-VERKAUF Modul)
@@ -2307,16 +2311,20 @@
      MOVE 56     TO W207-XBMP
      MOVE SPACES TO W207-XCOBVAL
      MOVE 1 TO C4-PTR
-     MOVE TAL-JHJJ of TAL-TIME-D (3:2) TO D-NUM2
-     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+*G.02.48 - BMP 12+13(ZP-VERKAUF) aus Autorisierung verwenden
+*     MOVE TAL-JHJJ of TAL-TIME-D (3:2) TO D-NUM2
+*     MOVE AF-BMP07 OF TXILOG70-AUT     TO D-NUM10
+     COMPUTE D-NUM12 = ZP-VERKAUF OF TXILOG70-AUT - 20000000000000
      STRING  "1100"
              TRACENR-AS of TXILOG70-AUT
-             D-NUM2
-             D-NUM10
+*             D-NUM2
+*             D-NUM10
+             D-NUM12
                  delimited by size
        INTO  W207-XCOBVAL
        WITH  POINTER C4-PTR
      END-STRING
+*G.02.48 - Ende
      COMPUTE W207-XCOBLEN = C4-PTR - 1
      PERFORM L100-ADD-BMP
      IF  ENDE
