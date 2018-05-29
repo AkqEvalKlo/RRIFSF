@@ -57,21 +57,27 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-05-18
-* Letzte Version   :: G.03.16
+* Letzte Aenderung :: 2018-05-29
+* Letzte Version   :: G.03.17
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
 * Kurzbeschreibung :: nur Terminalnachrichten von Typ 200, die
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1200 umgesetzt
 * Kurzbeschreibung :: werden.
-* Auftrag          :: R7-269
+* Auftrag          :: RRIFSF-2
 *
 * Aenderungen
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
-*-------|----------|-----|----------------------------------------*
+*-------|----------|-----|-------------------------------------------*
+*G.03.17|2018-05-25| kl  | RRIFSF-2:
+*       |          |     | - Neues FK-AS: Road Runner (RK=25)
+*       |          |     |   (Vereinbarung: Identisch WEAT AS 2)
+*       |          |     | - Zus. unnoetigen EVALUATE fuer Artikel-
+*       |          |     |   mapper-Format in xxxx stillgelegt
+*-------|----------|-----|-------------------------------------------*
 *G.03.16|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
 *       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|-------------------------------------------*
@@ -824,9 +830,6 @@
 *G.02.14 - Anfang
           88 VERF-EU                         VALUE 22.
 *G.02.14 - Ende
-*G.03.10 - Anfang
-          88 VERF-IQ                         VALUE 24.
-*G.03.10 - Ende
 *G.02.17 - Anfang
           88 VERF-LO                         VALUE 23.
 *G.02.17 - Ende
@@ -836,6 +839,13 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
+*G.03.10 - Anfang
+          88 VERF-IQ                         VALUE 24.
+*G.03.10 - Ende
+*kl20180529 - G.03.17 - Neues AS: Roadrunner
+          88 VERF-RR                         VALUE 25.
+*kl20180529 - G.03.17 - Ende
+          
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -848,10 +858,6 @@
           88 AS-VERF-EU                      VALUE "EU".
 *G.02.14 - Ende
 
-*G.03.10 - Anfang
-          88 AS-VERF-IQ                      VALUE "IQ".
-*G.03.10 - Ende
-
 *G.02.17 - Anfang
           88 AS-VERF-LO                      VALUE "LO".
 *G.02.17 - Ende
@@ -860,6 +866,13 @@
           88 AS-VERF-TN                      VALUE "TN".
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
+*G.03.10 - Anfang
+          88 AS-VERF-IQ                      VALUE "IQ".
+*G.03.10 - Ende
+*kl20170529 - G.03.17 - Neues AS: RoadRunner
+          88 AS-VERF-RR                      VALUE "RR".
+*kl20170529 - G.03.17 - Ende
+
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
 **          ---> Buffer für Log-Prozess
@@ -1346,6 +1359,12 @@
 
 *        WHEN VERF-AG    SET AS-VERF-AG TO TRUE
 *        WHEN VERF-AV    SET AS-VERF-AV TO TRUE
+*kl20180529 - G.03.17 - Neues Format RoadRunner (eigentlich
+*                       ueberfluessig, aber sicherheitshalber 
+*                       definieren)
+*        WHEN VERF-RR    SET AS-VERF-RR TO TRUE
+*kl20180529 - G.03.17 - Ende
+
          WHEN VERF-BP    SET AS-VERF-BP TO TRUE
          WHEN VERF-DK    SET AS-VERF-DK TO TRUE
 *G.02.14 - Anfang
@@ -1547,10 +1566,6 @@
 ******************************************************************
  B090-ENDE SECTION.
  B090-00.
-     continue
-*** =>
-*** => weitere Verarbeitung hier einfügen
-*** =>
 
 **  ---> schliessen $RECEIVE
      IF  PRG-OK
@@ -1565,6 +1580,7 @@
 ******************************************************************
  B100-VERARBEITUNG SECTION.
  B100-00.
+
 **  --> Fregat-Angaben merken
      MOVE IMSG-TERMID  TO W-FRE-TERMID
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
@@ -2642,12 +2658,16 @@
 *G.02.14 - Ende
 
 *G.02.14 - Anfang
-         WHEN 23     PERFORM D324-LOGPAY
+         WHEN 23     PERFORM D323-LOGPAY
 *G.02.14 - Ende
 
 *G.03.10 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
+         WHEN 24     PERFORM D324-STIGLECHNER
 *G.03.10 - Ende
+
+*kl20180529 - G.03.17 - Neues AS: RoadRunner
+         WHEN 25     PERFORM D325-ROADRUNNER
+*kl20180529 - G.03.17 - Ende
 
          WHEN OTHER
                  SET ENDE TO TRUE
@@ -3342,8 +3362,8 @@
 ******************************************************************
 * spezielle Behandlung für das LOGPAY-AS
 ******************************************************************
- D324-LOGPAY SECTION.
- D324-00.
+ D323-LOGPAY SECTION.
+ D323-00.
 
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
@@ -3389,7 +3409,7 @@
      END-IF
 
      .
- D324-99.
+ D323-99.
      EXIT.
 *G.02.17 - Ende
 
@@ -3397,8 +3417,8 @@
 ******************************************************************
 * spezielle Behandlung für das STIGLECHNER-AS
 ******************************************************************
- D326-STIGLECHNER SECTION.
- D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
 
 **  ---> Anwendung für MAC-Bildung setzen
 **   SET W66-DEFAULT TO TRUE
@@ -3460,10 +3480,57 @@
          EXIT SECTION
      END-IF
      .
- D326-99.
+ D324-99.
      EXIT.
 *G.03.10 - Ende
 
+*kl20180529 - G.03.17 - Neues AS: RoadRunner (lt. Vereinbarung
+*                       zunaechst identisch zu AVIA)
+******************************************************************
+* spezielle Behandlung für das RoadRunner-AS
+*    ggf. mit Hilfe der Parameter aus Tabelle =FCPARAM
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+**  ---> Anwendung für MAC-Bildung setzen
+     SET W66-DEFAULT TO TRUE
+
+**  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
+**  --->          noch Fahrerdaten, die einzustellen sind (48.8))
+**  --->          !!! bei Avia allerdings nicht !!!
+**  ---> zunächst die BitMap erstellen
+     MOVE ALL ZEROES TO W-BYTEMAP-48
+     MOVE "1"        TO W-BYTEMAP-48(4:1)
+     MOVE "1"        TO W-BYTEMAP-48(14:1)
+     IF  GEODATA-YES
+         MOVE "1"    TO W-BYTEMAP-48(41:1)
+     END-IF
+     MOVE  LOW-VALUE TO W-BITMAP
+     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+     MOVE 8        TO W-BUFFER-LEN
+     MOVE W-BITMAP TO W-BUFFER
+
+**  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
+     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
+     ADD 12 TO W-BUFFER-LEN
+
+     IF  GEODATA-YES
+         MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
+         ADD 20 TO W-BUFFER-LEN
+     END-IF
+
+**  +++> jetzt in die Nachricht einbauen
+     MOVE 48           TO W207-XBMP
+     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+     MOVE W-BUFFER     TO W207-XCOBVAL
+     PERFORM L100-ADD-BMP
+     IF  ENDE
+         EXIT SECTION
+     END-IF
+     .
+ D325-99.
+     EXIT.
+*kl20180529 - G.03.17 - Ende
 ******************************************************************
 * bestimmen CARDID
 ******************************************************************
@@ -3880,36 +3947,39 @@
      MOVE CARDID of TSKART40 TO AMP-CARDID
 
 *G.02.09 - Anfang
-     EVALUATE W-ROUTKZ
+*kl20180529 - G.03.17 - Das ist schoen, aber Uerfluessig 
+*                       (s.u. direkt nach Evaluate)
+*     EVALUATE W-ROUTKZ
 
-         WHEN 05     MOVE "AV" TO AMP-FORMAT
-         WHEN 07     MOVE "SH" TO AMP-FORMAT
-         WHEN 10     MOVE "TO" TO AMP-FORMAT
-         WHEN 12     MOVE "DK" TO AMP-FORMAT
-         WHEN 14     MOVE "BP" TO AMP-FORMAT
-         WHEN 15     MOVE "AG" TO AMP-FORMAT
-         WHEN 16     MOVE "OR" TO AMP-FORMAT
-         WHEN 17     MOVE "UT" TO AMP-FORMAT
-         WHEN 18     MOVE "TN" TO AMP-FORMAT
-
+*         WHEN 05     MOVE "AV" TO AMP-FORMAT
+*         WHEN 07     MOVE "SH" TO AMP-FORMAT
+*         WHEN 10     MOVE "TO" TO AMP-FORMAT
+*         WHEN 12     MOVE "DK" TO AMP-FORMAT
+*         WHEN 14     MOVE "BP" TO AMP-FORMAT
+*         WHEN 15     MOVE "AG" TO AMP-FORMAT
+*         WHEN 16     MOVE "OR" TO AMP-FORMAT
+*         WHEN 17     MOVE "UT" TO AMP-FORMAT
+*         WHEN 18     MOVE "TN" TO AMP-FORMAT
+*
 *G.02.14 - Anfang
-         WHEN 22     MOVE "EU" TO AMP-FORMAT
+*         WHEN 22     MOVE "EU" TO AMP-FORMAT
 *G.02.14 - Ende
-
+*
 *G.02.17 - Anfang
-         WHEN 23     MOVE "LO" TO AMP-FORMAT
+*         WHEN 23     MOVE "LO" TO AMP-FORMAT
 *G.02.17 - Ende
 
 *G.03.10 - Anfang
-         WHEN 24     MOVE "IQ" TO AMP-FORMAT
+*         WHEN 24     MOVE "IQ" TO AMP-FORMAT
 *G.03.10 - Ende
 
-         WHEN OTHER
-              CONTINUE
+*         WHEN OTHER
+*              CONTINUE
 
-     END-EVALUATE
+*     END-EVALUATE
 
 *G.02.09 - Ende
+*kl20180529 - G.03.17 - Ende
 
 **  ---> sollte Mapping für AGIP verändert werden, wirkt sich das auch hier aus
 *     MOVE MODUL OF MYPROG(2:2)        TO AMP-FORMAT
