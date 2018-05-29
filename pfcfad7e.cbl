@@ -3452,40 +3452,39 @@
      MOVE W-TSNR             TO AMP-TSNR
      MOVE CARDID of TSKART40 TO AMP-CARDID
 
-*G.02.07 - Anfang
-     EVALUATE W-ROUTKZ
-
-         WHEN 05     MOVE "AV" TO AMP-FORMAT
-         WHEN 07     MOVE "SH" TO AMP-FORMAT
-         WHEN 10     MOVE "TO" TO AMP-FORMAT
-         WHEN 12     MOVE "DK" TO AMP-FORMAT
-         WHEN 14     MOVE "BP" TO AMP-FORMAT
-         WHEN 15     MOVE "AG" TO AMP-FORMAT
-         WHEN 16     MOVE "OR" TO AMP-FORMAT
-         WHEN 17     MOVE "UT" TO AMP-FORMAT
-         WHEN 18     MOVE "TN" TO AMP-FORMAT
-
-*G.02.09 - Anfang
-         WHEN 22     MOVE "EU" TO AMP-FORMAT
-*G.02.09 - Ende
-
-*G.02.13 - Anfang
-         WHEN 23     MOVE "LO" TO AMP-FORMAT
-*G.02.13 - Ende
-
-*G.02.37 - Anfang
-         WHEN 24     MOVE "IQ" TO AMP-FORMAT
-*G.02.37 - Ende
-
-*G.02.49 - Roadrunner neu
-         WHEN 25     MOVE "RR" TO AMP-FORMAT
+*G.02.49 - Evaluate ist ueberfluessig, AS-VERF wird verwendet
+**G.02.07 - Anfang
+*     EVALUATE W-ROUTKZ
+*         WHEN 05     MOVE "AV" TO AMP-FORMAT
+*         WHEN 07     MOVE "SH" TO AMP-FORMAT
+*         WHEN 10     MOVE "TO" TO AMP-FORMAT
+*         WHEN 12     MOVE "DK" TO AMP-FORMAT
+*         WHEN 14     MOVE "BP" TO AMP-FORMAT
+*         WHEN 15     MOVE "AG" TO AMP-FORMAT
+*         WHEN 16     MOVE "OR" TO AMP-FORMAT
+*         WHEN 17     MOVE "UT" TO AMP-FORMAT
+*         WHEN 18     MOVE "TN" TO AMP-FORMAT
+*
+**G.02.09 - Anfang
+*         WHEN 22     MOVE "EU" TO AMP-FORMAT
+**G.02.09 - Ende
+*
+**G.02.13 - Anfang
+*         WHEN 23     MOVE "LO" TO AMP-FORMAT
+**G.02.13 - Ende
+*
+**G.02.37 - Anfang
+*         WHEN 24     MOVE "IQ" TO AMP-FORMAT
+**G.02.37 - Ende
+*
+**G.02.49 - Roadrunner neu
+*         WHEN 25     MOVE "RR" TO AMP-FORMAT
+**G.02.49 - Ende
+*         WHEN OTHER
+*              CONTINUE
+*     END-EVALUATE
+**G.02.07 - Ende
 *G.02.49 - Ende
-
-         WHEN OTHER
-              CONTINUE
-
-     END-EVALUATE
-*G.02.07 - Ende
 
 **  ---> sollte Mapping für AGIP verändert werden, wirkt sich das auch hier aus
 *     MOVE MODUL OF MYPROG(2:2)        TO AMP-FORMAT

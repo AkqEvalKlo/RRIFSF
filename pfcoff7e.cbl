@@ -3851,39 +3851,40 @@
      MOVE W-TSNR             TO AMP-TSNR
      MOVE CARDID of TSKART40 TO AMP-CARDID
 
-*G.06.04 - Anfang
-
-     EVALUATE W-ROUTKZ
-
-         WHEN 05     MOVE "AV" TO AMP-FORMAT
-         WHEN 07     MOVE "SH" TO AMP-FORMAT
-         WHEN 10     MOVE "TO" TO AMP-FORMAT
-         WHEN 12     MOVE "DK" TO AMP-FORMAT
-         WHEN 14     MOVE "BP" TO AMP-FORMAT
-         WHEN 15     MOVE "AG" TO AMP-FORMAT
-         WHEN 16     MOVE "OR" TO AMP-FORMAT
-         WHEN 17     MOVE "UT" TO AMP-FORMAT
-         WHEN 18     MOVE "TN" TO AMP-FORMAT
-
-*G.06.06 - Anfang
-         WHEN 22     MOVE "EU" TO AMP-FORMAT
-*G.06.06 - Ende
-
-*G.06.11 - Anfang
-         WHEN 23     MOVE "LO" TO AMP-FORMAT
-*G.06.11 - Ende
-
-*G.06.31 - Anfang
-         WHEN 24     MOVE "IQ" TO AMP-FORMAT
-*G.06.31 - Ende
-*G.06.38 - Roadrunner neu
-         WHEN 25     MOVE "RR" TO AMP-FORMAT
+*G.06.38 - Evaluate ist ueberfluessig, AS-VERF wird verwendet
+**G.06.04 - Anfang
+*     EVALUATE W-ROUTKZ
+*
+*         WHEN 05     MOVE "AV" TO AMP-FORMAT
+*         WHEN 07     MOVE "SH" TO AMP-FORMAT
+*         WHEN 10     MOVE "TO" TO AMP-FORMAT
+*         WHEN 12     MOVE "DK" TO AMP-FORMAT
+*         WHEN 14     MOVE "BP" TO AMP-FORMAT
+*         WHEN 15     MOVE "AG" TO AMP-FORMAT
+*         WHEN 16     MOVE "OR" TO AMP-FORMAT
+*         WHEN 17     MOVE "UT" TO AMP-FORMAT
+*         WHEN 18     MOVE "TN" TO AMP-FORMAT
+*
+**G.06.06 - Anfang
+*         WHEN 22     MOVE "EU" TO AMP-FORMAT
+**G.06.06 - Ende
+*
+**G.06.11 - Anfang
+*         WHEN 23     MOVE "LO" TO AMP-FORMAT
+**G.06.11 - Ende
+*
+**G.06.31 - Anfang
+*         WHEN 24     MOVE "IQ" TO AMP-FORMAT
+**G.06.31 - Ende
+**G.06.38 - Roadrunner neu
+*         WHEN 25     MOVE "RR" TO AMP-FORMAT
+**G.06.38 - Ende
+*
+*         WHEN OTHER
+*             CONTINUE
+*
+*     END-EVALUATE
 *G.06.38 - Ende
-
-         WHEN OTHER
-             CONTINUE
-
-     END-EVALUATE
 
 *G.06.04 - Ende
 

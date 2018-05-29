@@ -3748,42 +3748,40 @@
      MOVE W-TSNR             TO AMP-TSNR
      MOVE CARDID of TSKART40 TO AMP-CARDID
 
-*G.01.09 - Anfang
-
-     EVALUATE W-ROUTKZ
-
-         WHEN 05  MOVE "AV" TO AMP-FORMAT
-         WHEN 07  MOVE "SH" TO AMP-FORMAT
-         WHEN 10  MOVE "TO" TO AMP-FORMAT
-         WHEN 12  MOVE "DK" TO AMP-FORMAT
-         WHEN 14  MOVE "BP" TO AMP-FORMAT
-         WHEN 15  MOVE "AG" TO AMP-FORMAT
-         WHEN 16  MOVE "OR" TO AMP-FORMAT
-         WHEN 17  MOVE "UT" TO AMP-FORMAT
-         WHEN 18  MOVE "TN" TO AMP-FORMAT
-
-*G.01.14 - Anfang
-         WHEN 22  MOVE "EU" TO AMP-FORMAT
-*G.01.14 - Ende
-
-*G.01.17 - Anfang
-         WHEN 23  MOVE "LO" TO AMP-FORMAT
-*G.01.17 - Ende
-
-*G.06.48 - Anfang
-         WHEN 24  MOVE "IQ" TO AMP-FORMAT
-*G.06.48 - Ende
-
-*G.06.55 - Roadrunner neu
-         WHEN 25  MOVE "RR" TO AMP-FORMAT
+*G.06.55 - Evaluate ist ueberfluessig, AS-VERF wird verwendet
+**G.01.09 - Anfang
+*     EVALUATE W-ROUTKZ
+*
+*         WHEN 05  MOVE "AV" TO AMP-FORMAT
+*         WHEN 07  MOVE "SH" TO AMP-FORMAT
+*         WHEN 10  MOVE "TO" TO AMP-FORMAT
+*         WHEN 12  MOVE "DK" TO AMP-FORMAT
+*         WHEN 14  MOVE "BP" TO AMP-FORMAT
+*         WHEN 15  MOVE "AG" TO AMP-FORMAT
+*         WHEN 16  MOVE "OR" TO AMP-FORMAT
+*         WHEN 17  MOVE "UT" TO AMP-FORMAT
+*         WHEN 18  MOVE "TN" TO AMP-FORMAT
+*
+**G.01.14 - Anfang
+*         WHEN 22  MOVE "EU" TO AMP-FORMAT
+**G.01.14 - Ende
+*
+**G.01.17 - Anfang
+*         WHEN 23  MOVE "LO" TO AMP-FORMAT
+**G.01.17 - Ende
+*
+**G.06.48 - Anfang
+*         WHEN 24  MOVE "IQ" TO AMP-FORMAT
+**G.06.48 - Ende
+*
+**G.06.55 - Roadrunner neu
+*         WHEN 25  MOVE "RR" TO AMP-FORMAT
+**G.06.55 - Ende
+*         WHEN OTHER
+*              CONTINUE
+*     END-EVALUATE
+**G.01.09 - Ende
 *G.06.55 - Ende
-
-         WHEN OTHER
-              CONTINUE
-
-     END-EVALUATE
-
-*G.01.09 - Ende
 
 **  ---> sollte Mapping für AGIP verändert werden, wirkt sich das auch hier aus
 *     MOVE MODUL OF MYPROG(2:2)        TO AMP-FORMAT
