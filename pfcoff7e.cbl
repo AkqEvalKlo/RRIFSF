@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-05-18
-* Letzte Version   :: G.06.37
+* Letzte Aenderung :: 2018-05-29
+* Letzte Version   :: G.06.38
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -60,15 +60,18 @@
 * Kurzbeschreibung :: Die Terminal-Anfragen werden von diesem
 * Kurzbeschreibung :: Programm direkt beantwortet.
 * Package          :: ICC
-* Auftrag          :: R7-269
+* Auftrag          :: RRIFSF-6
 *
 * Aenderungen:
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
-*-------|---------|-----|----------------------------------------*
-*G.06.37|20180518 | kl  | Neukompilierung wg. Korrektur ZPVERKM
-*       |         |     | (ZP-VERKAUF Modul)
+*-------|----------|-----|-------------------------------------------*
+*G.06.38|2018-05-29| kus | RRIFSF-6:
+*       |          |     | - Umsetzung Roadrunner (Routkz = 25)
+*-------|----------|-----|---------------------------------------*
+*G.06.37|20180518  | kl  | Neukompilierung wg. Korrektur ZPVERKM
+*       |          |     | (ZP-VERKAUF Modul)
 *-------|----------|-----|-------------------------------------------*
 *G.06.36|2018-04-30| kus | F1ICC-107:
 *       |          |     | - AS BMP 12 fuellen mit ZP vom Terminal
@@ -243,6 +246,7 @@
 *    -   EUROWAG
 *    -   LOGPAY
 *    -   STIGLECHNER
+*    -   ROADRUNNER
 *
 *
 * Das Programm erwartet die folgenden Parameter:
@@ -295,7 +299,8 @@
 * D318-TND
 * D322-EUROWAG
 * D323-LOGPAY
-* D326-STIGLECHNER
+* D324-STIGLECHNER
+* D325-ROADRUNNER
 * D900-GET-CARDID
 * D910-GET-ASTRACENR
 * D950-EMV-VERARBEITUNG
@@ -830,11 +835,6 @@
 *G.06.06 - Anfang
           88 VERF-EU                         VALUE 22.
 *G.06.06 - Ende
-
-*G.06.31 - Anfang
-          88 VERF-IQ                         VALUE 24.
-*G.06.31 - Ende
-
 *G.06.11 - Anfang
           88 VERF-LO                         VALUE 23.
 *G.06.11 - Ende
@@ -844,7 +844,13 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
-
+*G.06.31 - Anfang
+          88 VERF-IQ                         VALUE 24.
+*G.06.31 - Ende
+*G.06.38 - Roadrunner neu
+          88 VERF-RR                         VALUE 25.
+*G.06.38 - Ende
+          
 **  Verfahrensfestlegung für Artikelmapper
 **  AG, AV und TN sind gleich (werden wie AG behandelt)
  01          AS-VERF             PIC X(02).
@@ -855,11 +861,6 @@
 *G.06.06 - Anfang
           88 AS-VERF-EU                      VALUE "EU".
 *G.06.06 - Ende
-
-*G.06.31 - Anfang
-          88 AS-VERF-IQ                      VALUE "IQ".
-*G.06.31 - Anfang
-
 *G.06.11 - Anfang
           88 AS-VERF-LO                      VALUE "LO".
 *G.06.11 - Ende
@@ -868,7 +869,12 @@
           88 AS-VERF-TN                      VALUE "TN".
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
-
+*G.06.31 - Anfang
+          88 AS-VERF-IQ                      VALUE "IQ".
+*G.06.31 - Ende
+*G.06.38 - Roadrunner neu
+          88 AS-VERF-RR                      VALUE "RR".
+*G.06.38 - Ende          
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
 **          ---> Parametertabelle für Autorisierungssystem
@@ -1343,7 +1349,7 @@
          WHEN VERF-UT    SET AS-VERF-UT TO TRUE
          WHEN VERF-EU    SET AS-VERF-EU TO TRUE
          WHEN VERF-LO    SET AS-VERF-LO TO TRUE
-
+**  --->  Roadrunner verwendet Default, wie WEAT AS2
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
 
      END-EVALUATE
@@ -2548,8 +2554,12 @@
 *G.06.11 - Ende
 
 *G.06.31 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
+         WHEN 24     PERFORM D324-STIGLECHNER
 *G.06.31 - Ende
+
+*G.06.38 - Roadrunner neu
+         WHEN 25     PERFORM D325-ROADRUNNER
+*G.06.38 - Ende
 
          WHEN OTHER
                  SET ENDE TO TRUE
@@ -3364,8 +3374,8 @@
 * spezielle Behandlung für das Stiglechner-AS
 * ggf. mit Hilfe der Parameter aus Tabelle =FCPARAM
 ******************************************************************
- D326-STIGLECHNER SECTION.
- D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
 **  ---> Anwendung für MAC-Bildung setzen
 **   SET W66-DEFAULT TO TRUE
      SET W66-DKV TO TRUE
@@ -3389,10 +3399,60 @@
      END-IF
 
      .
- D326-99.
+ D324-99.
      EXIT.
 
 *G.06.31 - Ende
+
+
+******************************************************************
+* spezielle Behandlung für das Roadrunner-AS
+*G.06.38 - neu
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+**  ---> Anwendung für MAC-Bildung setzen
+     SET W66-DEFAULT TO TRUE
+
+     IF  IMSG-TBMP(59) = 1
+     AND W-GENNR       > ZEROS
+         MOVE 38      TO W207-XBMP
+         MOVE 6       TO W207-XCOBLEN
+         MOVE W-GENNR TO W207-XCOBVAL
+         PERFORM L100-ADD-BMP
+         IF  ENDE
+             EXIT SECTION
+         END-IF
+     END-IF
+
+**  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
+**  --->          noch Fahrerdaten, die einzustellen sind (48.8))
+**  --->          !!! bei Roadrunner allerdings nicht !!!
+**  ---> zunächst die BitMap erstellen
+     MOVE ALL ZEROES TO W-BYTEMAP-48
+     MOVE "1"        TO W-BYTEMAP-48(4:1)
+     MOVE "1"        TO W-BYTEMAP-48(14:1)
+
+     MOVE  LOW-VALUE TO W-BITMAP
+     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+     MOVE 8        TO W-BUFFER-LEN
+     MOVE W-BITMAP TO W-BUFFER
+
+**  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
+     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
+     ADD 12 TO W-BUFFER-LEN
+
+**  +++> jetzt in die Nachricht einbauen
+     MOVE 48           TO W207-XBMP
+     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+     MOVE W-BUFFER     TO W207-XCOBVAL
+     PERFORM L100-ADD-BMP
+     IF  ENDE
+         EXIT SECTION
+     END-IF
+     .
+ D325-99.
+     EXIT.
 
 ******************************************************************
 * bestimmen CARDID
@@ -3816,6 +3876,9 @@
 *G.06.31 - Anfang
          WHEN 24     MOVE "IQ" TO AMP-FORMAT
 *G.06.31 - Ende
+*G.06.38 - Roadrunner neu
+         WHEN 25     MOVE "RR" TO AMP-FORMAT
+*G.06.38 - Ende
 
          WHEN OTHER
              CONTINUE
