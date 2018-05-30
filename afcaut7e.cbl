@@ -44,8 +44,8 @@
 
 
 *******************************************************************************
-* Letzte Aenderung :: 2018-04-04
-* Letzte Version   :: G.02.10
+* Letzte Aenderung :: 2018-05-30
+* Letzte Version   :: G.02.100
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -53,12 +53,16 @@
 * Kurzbeschreibung :: auf Termial-Nachrichten vom Typ 210 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: R7-272
+* Auftrag          :: RRIFSF-2
 *
 * Aenderungen
 *
-*-----------------------------------------------------------------------------*
+*------------------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                          *
+*-------|----------|-----|-------------------------------------------*
+*G.02.100|2018-05-30| kl  | RRIFSF-2:
+*       |          |     | - Neues FK-AS: Road Runner (RK=25)
+*       |          |     |   (Vereinbarung: Identisch WEAT AS 2)
 *-------|----------|-----|-------------------------------------------*
 *G.02.10|2018-04-04| kl  | R7-272:
 *       |          |     | Optimierung Zugriff / Laden FCPARAM
@@ -785,10 +789,6 @@
           88 VERF-EU                         VALUE 22.
 *G.01.01 - Ende
 
-*G.02.07 - Anfang
-          88 VERF-IQ                         VALUE 24.
-*G.02.07 - Ende
-
 *G.01.05 - Anfang
           88 VERF-LO                         VALUE 23.
 *G.01.05 - Ende
@@ -799,6 +799,15 @@
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
 
+*G.02.07 - Anfang
+          88 VERF-IQ                         VALUE 24.
+*G.02.07 - Ende
+
+*kl20180530 - G.02.100 - Neues AS Road Runner
+          88 VERF-RR                         VALUE 25.
+*kl20180530 - G.02.100 - Neues AS Road Runner
+
+          
 **          ---> Verfahrensfestlegung AS-MAC-Berechnung
  01          AS-VERF             PIC X(02).
           88 AS-VERF-DK                      VALUE "DK".
@@ -816,6 +825,11 @@
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
           88 AS-VERF-TN                      VALUE "TN".
+          
+*kl20180530 - G.02.100 - Neues AS Road Runner
+          88 AS-VERF-RR                      VALUE "RR".
+*kl20180530 - G.02.100 - Ende
+          
           88 AS-VERF-DEFAULT                 VALUE "SL".
 
 **          --->
@@ -1180,6 +1194,10 @@
 *         WHEN VERF-UT    SET AS-VERF-UT TO TRUE
          WHEN VERF-TN    SET AS-VERF-TN TO TRUE
 
+*kl20180530 - G.02.100 - Neues AS Road Runner
+         WHEN VERF-RR    SET AS-VERF-RR TO TRUE
+*kl20180530 - G.02.100 - Ende
+         
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
 
      END-EVALUATE
@@ -1308,6 +1326,10 @@
          WHEN VERF-TO    MOVE "TO" TO APPL-KZ of IFSFAC
          WHEN VERF-UT    MOVE "UT" TO APPL-KZ of IFSFAC
 
+*kl20180530 - G.02.100 - Neues AS Road Runner
+         WHEN VERF-RR    MOVE "RR" TO APPL-KZ of IFSFAC         
+*kl20180530 - G.02.100 - Ende
+         
          WHEN OTHER      MOVE "Verfahren für AC-Mapping kann nicht bestimmt werden"
                              TO DATEN-BUFFER1
                          MOVE "Programm wird beendet" TO DATEN-BUFFER2
@@ -2388,11 +2410,16 @@
          WHEN 22     PERFORM D322-EUROWAG
 *G.01.01 - Ende
 *G.01.05 - Anfang
-         WHEN 23     PERFORM D324-LOGPAY
+         WHEN 23     PERFORM D323-LOGPAY
 *G.01.05 - Ende
 *G.02.07 - Anfang
-         WHEN 24     PERFORM D326-STIGLECHNER
+         WHEN 24     PERFORM D324-STIGLECHNER
 *G.02.07 - Ende
+
+*kl20180530 - G.02.100 - Neues AS Road Runner
+         WHEN 25    PERFORM D325-ROADRUNNER
+*kl20180530 - G.02.100 - Ende
+
          WHEN OTHER
                  SET ENDE TO TRUE
                  MOVE W-ROUTKZ TO D-NUM4
@@ -2733,8 +2760,8 @@
 ******************************************************************
 * spezielle Behandlung für das LOGPAY-AS
 ******************************************************************
- D324-LOGPAY SECTION.
- D324-00.
+ D323-LOGPAY SECTION.
+ D323-00.
 **  ---> BMP 63 - Artikeldaten (in AS-Tx zugelassen Prod. aus BMP62)
 **  ---> Produktdaten aufbereiten
 
@@ -2746,7 +2773,7 @@
          END-IF
      END-IF
      .
- D324-99.
+ D323-99.
      EXIT.
 
 *G.01.05 - Ende
@@ -2756,8 +2783,8 @@
 ******************************************************************
 * spezielle Behandlung für das STIGLECHNER-AS
 ******************************************************************
- D326-STIGLECHNER SECTION.
- D326-00.
+ D324-STIGLECHNER SECTION.
+ D324-00.
 **  ---> BMP 63 - Artikeldaten (in AS-Tx zugelassen Prod. aus BMP62)
 **  ---> Produktdaten aufbereiten
 
@@ -2769,10 +2796,31 @@
          END-IF
      END-IF
      .
- D326-99.
+ D324-99.
      EXIT.
 
 *G.02.07 - Ende
+
+*kl20180530 - G.02.100 - Neues AS Road Runner
+******************************************************************
+* spezielle Behandlung für das RoadRunner-AS
+******************************************************************
+ D325-ROADRUNNER SECTION.
+ D325-00.
+**  ---> BMP 63 - Artikeldaten (in AS-Tx zugelassen Prod. aus BMP62)
+**  ---> Produktdaten aufbereiten
+
+     IF  W-AC = 87 and IMSG-TBMP(62) = 1
+         MOVE "RR" TO AMP-FORMAT
+         PERFORM E300-ARTIKELDATEN
+         IF  ENDE
+             EXIT SECTION
+         END-IF
+     END-IF
+     .
+ D325-99.
+     EXIT.
+*kl20180530 - G.02.100 - Ende
 
 ******************************************************************
  E300-ARTIKELDATEN SECTION.
