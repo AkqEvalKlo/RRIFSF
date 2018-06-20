@@ -57,20 +57,24 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-05-29
-* Letzte Version   :: G.03.17
+* Letzte Aenderung :: 2018-06-20
+* Letzte Version   :: G.03.18
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
 * Kurzbeschreibung :: nur Terminalnachrichten von Typ 200, die
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1200 umgesetzt
 * Kurzbeschreibung :: werden.
-* Auftrag          :: RRIFSF-2
+* Auftrag          :: R7-351
 *
 * Aenderungen
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.03.18|2018-06-20| kus | R7-351:
+*       |          |     | - MAC Fehler Eigenantwort bei Eurowag, 
+*       |          |     |   wenn Artikelprf. fehlerhaft, behoben
 *-------|----------|-----|-------------------------------------------*
 *G.03.17|2018-05-25| kl  | RRIFSF-2:
 *       |          |     | - Neues FK-AS: Road Runner (RK=25)
@@ -2423,6 +2427,34 @@
      END-IF
 
 
+
+*G.03.18 - schon hier, bevor BMP 57 bei PAC Umschluesseln Eurowag
+*          veraendert wird
+     IF W207-TBMP(63) = 1
+        MOVE W-ROUTKZ    TO S-ROUTKZ  OF S-SEARCH-KEY
+        MOVE W-CARDID    TO S-CARDID  OF S-SEARCH-KEY
+        MOVE 1200        TO S-ISONTYP OF S-SEARCH-KEY
+        MOVE "AS"        TO S-KZ-MSG  OF S-SEARCH-KEY
+        MOVE 63          TO S-BMP     OF S-SEARCH-KEY
+        MOVE 1           TO S-LFDNR   OF S-SEARCH-KEY
+
+        PERFORM U300-SEARCH-TAB
+
+        IF  PRM-FOUND
+          IF T-KZ-ABWEICHUNG (T-AKT-IND) = "X"
+             MOVE ZERO TO W207-TBMP-O (63:1)
+             CONTINUE
+          ELSE
+           PERFORM C210-AS-GENERELL-PRF-BMP63
+          END-IF
+        ELSE
+           PERFORM C210-AS-GENERELL-PRF-BMP63
+        END-IF
+     END-IF
+*G.03.18 - Ende
+
+     
+
 *  ---> BMP 52 - PAK (muss umgeschlüsselt werden)
      IF  PAC-YES
          MOVE 52 TO W207-XBMP
@@ -2527,31 +2559,32 @@
          EXIT SECTION
      END-IF
 
-**G.02.00 - Anfang
-
-     IF W207-TBMP(63) = 1
-        MOVE W-ROUTKZ    TO S-ROUTKZ  OF S-SEARCH-KEY
-        MOVE W-CARDID    TO S-CARDID  OF S-SEARCH-KEY
-        MOVE 1200        TO S-ISONTYP OF S-SEARCH-KEY
-        MOVE "AS"        TO S-KZ-MSG  OF S-SEARCH-KEY
-        MOVE 63          TO S-BMP     OF S-SEARCH-KEY
-        MOVE 1           TO S-LFDNR   OF S-SEARCH-KEY
-
-        PERFORM U300-SEARCH-TAB
-
-        IF  PRM-FOUND
-          IF T-KZ-ABWEICHUNG (T-AKT-IND) = "X"
-             MOVE ZERO TO W207-TBMP-O (63:1)
-             CONTINUE
-          ELSE
-           PERFORM C210-AS-GENERELL-PRF-BMP63
-          END-IF
-        ELSE
-           PERFORM C210-AS-GENERELL-PRF-BMP63
-        END-IF
-     END-IF
-
-**G.02.00 - Ende
+     
+*G.03.18 - wird frueher ausgefuehrt
+***G.02.00 - Anfang
+*     IF W207-TBMP(63) = 1
+*        MOVE W-ROUTKZ    TO S-ROUTKZ  OF S-SEARCH-KEY
+*        MOVE W-CARDID    TO S-CARDID  OF S-SEARCH-KEY
+*        MOVE 1200        TO S-ISONTYP OF S-SEARCH-KEY
+*        MOVE "AS"        TO S-KZ-MSG  OF S-SEARCH-KEY
+*        MOVE 63          TO S-BMP     OF S-SEARCH-KEY
+*        MOVE 1           TO S-LFDNR   OF S-SEARCH-KEY
+*
+*        PERFORM U300-SEARCH-TAB
+*
+*        IF  PRM-FOUND
+*          IF T-KZ-ABWEICHUNG (T-AKT-IND) = "X"
+*             MOVE ZERO TO W207-TBMP-O (63:1)
+*             CONTINUE
+*          ELSE
+*           PERFORM C210-AS-GENERELL-PRF-BMP63
+*          END-IF
+*        ELSE
+*           PERFORM C210-AS-GENERELL-PRF-BMP63
+*        END-IF
+*     END-IF
+***G.02.00 - Ende
+*G.03.18 - Ende
 
 **  ---> nur fürs testen
      IF  TRACE-ON
