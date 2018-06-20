@@ -2450,6 +2450,9 @@
         ELSE
            PERFORM C210-AS-GENERELL-PRF-BMP63
         END-IF
+        IF ENDE OR W-AC > 0
+            EXIT SECTION
+        END-IF
      END-IF
 *G.03.18 - Ende
 
