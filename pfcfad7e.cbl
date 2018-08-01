@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2018-05-28
-* Letzte Version   :: G.02.49
+* Letzte Aenderung :: 2018-07-27
+* Letzte Version   :: G.02.50
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -67,6 +67,10 @@
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
+*-------|----------|-----|---------------------------------------*
+*G.02.50|2018-07-27| kus | R7-364:
+*       |          |     | - Antworten bei 400er mit fehlendem 
+*       |          |     |   UMSWEAT Eintrag
 *-------|----------|-----|---------------------------------------*
 *G.02.49|2018-05-28| kus | RRIFSF-5:
 *       |          |     | - Umsetzung Roadrunner (Routkz = 25)
@@ -4392,11 +4396,14 @@
  M180-00.
      CALL "IUMSW07" USING WUMS-WUMSO07C
      IF  WUMS-ERR
-         IF  WUMS-RCODE = 100 and ISONTYP of TXILOG70 > 400
+*G.02.50 - bei fehlendem Umsatzrecord kein Ende
+*         IF  WUMS-RCODE = 100 and ISONTYP of TXILOG70 > 400
+         IF  WUMS-RCODE = 100
 **          ---> bei Wiederholungsstorno kann der Umsatzeintrag
 **          ---> schon abgeräumt sein, also weiter machen KEIN ENDE
              EXIT SECTION
          END-IF
+*G.02.50 - Ende
          MOVE 1201           TO ERROR-NR OF GEN-ERROR
          MOVE WUMS-RCODE     TO D-NUM4
          STRING  "IUMSW07@"
@@ -4411,7 +4418,7 @@
 *G.02.33 - Fuer Select Statement Daten wieder moven
      ELSE
         MOVE WUMS-UMSATZ TO UMSWEAT
-*G.02.33 - Ende
+*G.02.33 - Ende 
      END-IF
      .
  M180-99.
