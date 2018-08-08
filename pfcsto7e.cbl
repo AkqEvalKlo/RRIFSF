@@ -45,8 +45,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2018-05-28
-* Letzte Version   :: G.01.11
+* Letzte Aenderung :: 2018-08-03
+* Letzte Version   :: G.01.12
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -60,6 +60,9 @@
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
+*-------|----------|-----|---------------------------------------*
+*G.01.12|2018-08-03| kus | R7-365/DKVCHIP-8:
+*       |          |     | - neues KZ-VERF fuer Chip 
 *-------|----------|-----|---------------------------------------*
 *G.01.11|2018-05-28| kl  | F1ICC-114:
 *       |          |     | - Branchänderung KUS vom 25.05.2018
@@ -3663,14 +3666,23 @@
      MOVE 70             TO LOGPROT        OF TXILOG70
      MOVE "S"            TO KZ-BEARB       OF TXILOG70
 
+*G.01.12 - neue KZ-VERF fuer Chip
 *G.00.16 - Anfang - Sonst fuktioniert =UMSWEAT bei man. Storno nicht
-
      IF OFFLINE-BUCHUNG  OF BUCHUNGS-FLAG
-        MOVE "k"         TO KZ-VERF        OF TXILOG70
+        IF W-ERF-CHIP
+            MOVE "q"         TO KZ-VERF        OF TXILOG70
+        ELSE
+            MOVE "k"         TO KZ-VERF        OF TXILOG70
+        END-IF
      ELSE
-        MOVE "f"         TO KZ-VERF        OF TXILOG70
+        IF W-ERF-CHIP
+            MOVE "r"         TO KZ-VERF        OF TXILOG70
+        ELSE
+            MOVE "f"         TO KZ-VERF        OF TXILOG70
+        END-IF
      END-IF
 *G.00-16 - Ende
+*G.01.12 - Ende
 
      IF  STORNO-AUTO
          MOVE "A"        TO KZ-UMSATZ      OF TXILOG70

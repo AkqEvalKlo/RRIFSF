@@ -57,8 +57,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-06-20
-* Letzte Version   :: G.03.18
+* Letzte Aenderung :: 2018-08-03
+* Letzte Version   :: G.03.19
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -71,6 +71,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.03.19|2018-08-03| kus | R7-365/DKVCHIP-2:
+*       |          |     | - neues KZ-VERF fuer Chip 
 *-------|----------|-----|-------------------------------------------*
 *G.03.18|2018-06-20| kus | R7-351:
 *       |          |     | - MAC Fehler Eigenantwort bei Eurowag, 
@@ -1355,8 +1358,8 @@
                                        W-ROUTKZ
                                        S-ROUTKZ
 **                                    ---> für Artikelmapper
-                                       VERF-ROUTKZ
-
+                                       VERF-ROUTKZ                                       
+                                       
 **  ---> Anwendung setzen für Artikelmapper
 **  ---> (die auf Kommentar gesetzten sind default (AG))
      EVALUATE TRUE
@@ -1391,6 +1394,7 @@
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
 
      END-EVALUATE
+    
 
 **  ---> interne Tabelle initialisieren
 *kl20180109 - G.03.09 - Initialisieren mit T-TAB-MAX
@@ -2679,7 +2683,7 @@
  C300-00.
 **  ---> verzweigen je nach ROUTKZ
      EVALUATE W-ROUTKZ
-
+     
          WHEN 05     PERFORM D305-AVIA
          WHEN 07     PERFORM D307-SHELL
          WHEN 10     PERFORM D310-TOTAL
@@ -4400,7 +4404,9 @@
      ELSE
          MOVE "A"        TO KZ-BEARB       of TXILOG70
      END-IF
-     MOVE "f"            TO KZ-VERF        of TXILOG70
+*G.03.19 - neues KZ-VERF fuer Chip
+*    MOVE "f"            TO KZ-VERF        of TXILOG70
+     
      IF  UMS-ZAHLUNG
          MOVE "Z"        TO KZ-UMSATZ      of TXILOG70
      ELSE
@@ -4414,11 +4420,14 @@
      IF W-ERF-CHIP
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
+        MOVE   "r"       TO KZ-VERF        of TXILOG70
      ELSE
 *       Kartenart = Spur2 Magnet
         MOVE   221       TO KARTEN-ART     of TXILOG70
+        MOVE   "f"       TO KZ-VERF        of TXILOG70
      END-IF
 *kl20180315 - G.03.12 - Ende
+*G.03.19 - Ende
 
 *     IF  W-ERFASSUNGS-ART = 01
 *         MOVE "ME"       TO TRANS-ART      of TXILOG70

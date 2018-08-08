@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2018-07-27
-* Letzte Version   :: G.02.50
+* Letzte Aenderung :: 2018-08-03
+* Letzte Version   :: G.02.51
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -67,6 +67,9 @@
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
+*-------|----------|-----|---------------------------------------*
+*G.02.51|2018-08-03| kus | R7-365/DKVCHIP-6:
+*       |          |     | - neues KZ-VERF fuer Chip 
 *-------|----------|-----|---------------------------------------*
 *G.02.50|2018-07-27| kus | R7-364:
 *       |          |     | - Antworten bei 400er mit fehlendem 
@@ -3835,7 +3838,8 @@
 
 *G.02.06 - Ende
 
-     MOVE "f"            TO KZ-VERF        of TXILOG70
+*G.02.51 - neues KZ-VERF fuer Chip
+*     MOVE "f"            TO KZ-VERF        of TXILOG70
      MOVE W-ABL          TO ABL-JJMM       of TXILOG70
      MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART of TXILOG70
@@ -3845,11 +3849,14 @@
      IF W-ERF-CHIP
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
+        MOVE   "r"       TO KZ-VERF        of TXILOG70
      ELSE
 *       Kartenart = Spur2 Magnet
         MOVE   221       TO KARTEN-ART     of TXILOG70
+        MOVE   "f"       TO KZ-VERF        of TXILOG70
      END-IF
 *kl20180316 - G.02.40 - Ende
+*G.02.51 - Ende
 
 *G.02.22 - Trans-Art aus Anfrage uebernehmen
 *     MOVE "2E"        TO TRANS-ART      of TXILOG70

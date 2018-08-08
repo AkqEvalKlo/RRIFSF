@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-05-29
-* Letzte Version   :: G.06.38
+* Letzte Aenderung :: 2018-08-01
+* Letzte Version   :: G.06.39
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -67,6 +67,10 @@
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
 *-------|----------|-----|-------------------------------------------*
+*G.06.39|20180801  | KUS | R7-367/DKVCHIP-7:
+*       |          |     | - neues KZ-VERF FK Offline "m"
+*       |          |     | - neues KZ-VERF FK Chip Offline "q"
+*----------------------------------------------------------------*
 *G.06.38|2018-05-29| kus | RRIFSF-6:
 *       |          |     | - Umsetzung Roadrunner (Routkz = 25)
 *-------|----------|-----|---------------------------------------*
@@ -4250,7 +4254,8 @@
      ELSE
          MOVE "A"        TO KZ-BEARB       of TXILOG70
      END-IF
-     MOVE "k"            TO KZ-VERF        of TXILOG70
+*G.06.39 - neues KZ-VERF fuer Offliner + Chip
+*     MOVE "k"            TO KZ-VERF        of TXILOG70
      IF  ABWKZ-ZAHLUNG
          MOVE "Z"        TO KZ-UMSATZ      of TXILOG70
      ELSE
@@ -4265,11 +4270,14 @@
      IF W-ERF-CHIP
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
+        MOVE "q"         TO KZ-VERF        of TXILOG70
      ELSE
 *       Kartenart = Spur2 Magnet
         MOVE   221       TO KARTEN-ART     of TXILOG70
+        MOVE "m"         TO KZ-VERF        of TXILOG70
      END-IF
 *kl20180316 - G.06.33 - Ende
+*G.06.39 - Ende
 
 *G.06.21 - Trans-Art anpassen fuer Chip
 *     IF  W-ERFASSUNGS-ART = 01

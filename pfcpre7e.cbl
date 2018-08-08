@@ -58,8 +58,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-05-24
-* Letzte Version   :: G.06.55
+* Letzte Aenderung :: 2018-08-03
+* Letzte Version   :: G.06.56
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protok.
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -73,6 +73,9 @@
 *
 *---------------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                        *
+*-------|----------|-----|--------------------------------------------------*
+*G.06.56|2018-08-03| kus | R7-365/DKVCHIP-4:
+*       |          |     | - neues KZ-VERF fuer Chip 
 *-------|----------|-----|--------------------------------------------------*
 *G.06.55|20180524  | kus | RRIFSF-3:
 *       |          |     | - Umsetzung Roadrunner (Routkz = 25)
@@ -4157,7 +4160,8 @@
      ELSE
          MOVE "A"        TO KZ-BEARB       of TXILOG70
      END-IF
-     MOVE "f"            TO KZ-VERF        of TXILOG70
+*G.06.56 - neues KZ-VERF Chip
+*     MOVE "f"            TO KZ-VERF        of TXILOG70
      IF  UMS-ZAHLUNG
          MOVE "Z"        TO KZ-UMSATZ      of TXILOG70
      ELSE
@@ -4172,11 +4176,14 @@
      IF W-ERF-CHIP
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
+        MOVE   "r"       TO KZ-VERF        of TXILOG70
      ELSE
 *       Kartenart = Spur2 Magnet
         MOVE   221       TO KARTEN-ART     of TXILOG70
+        MOVE   "f"       TO KZ-VERF        of TXILOG70
      END-IF
 *kl20180316 - G.06.50 - Ende
+*G.06.56 - Ende
 
 
 
