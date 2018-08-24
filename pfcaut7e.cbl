@@ -57,8 +57,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-08-03
-* Letzte Version   :: G.03.19
+* Letzte Aenderung :: 2018-08-23
+* Letzte Version   :: G.03.20
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -71,6 +71,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.03.20|2018-08-23| kus | R7-389:
+*       |          |     | - Kilometerstand in 48-8 TND
 *-------|----------|-----|-------------------------------------------*
 *G.03.19|2018-08-03| kus | R7-365/DKVCHIP-2:
 *       |          |     | - neues KZ-VERF fuer Chip 
@@ -1387,7 +1390,9 @@
 *G.02.17 - Ende
          WHEN VERF-OR    SET AS-VERF-OR TO TRUE
          WHEN VERF-SH    SET AS-VERF-SH TO TRUE
-*        WHEN VERF-TN    SET AS-VERF-TN TO TRUE
+*G.03.20 - jetzt spezielles Verfahren fuer TND
+         WHEN VERF-TN    SET AS-VERF-TN TO TRUE
+*G.03.20 - Ende
          WHEN VERF-TO    SET AS-VERF-TO TO TRUE
          WHEN VERF-UT    SET AS-VERF-UT TO TRUE
 
@@ -3298,46 +3303,54 @@
 **  ---> Anwendung für MAC-Bildung setzen
 *     SET W66-DEFAULT TO TRUE
      SET W66-TND TO TRUE
-
+     
+     
+     
+*G.03.20 - Jetzt auch Subfeld 8, DEFAULT-Routine fuer 48 kann verwendet werden
+     PERFORM E310-BMP48-DEFAULT
+     
 **  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
 **  --->          noch Fahrerdaten, die einzustellen sind (48.8))
 **  --->          !!! bei TND/Avia allerdings nicht !!!
 **  ---> zunächst die BitMap erstellen
-     MOVE ALL ZEROES TO W-BYTEMAP-48
-     MOVE "1"        TO W-BYTEMAP-48(4:1)
-     MOVE "1"        TO W-BYTEMAP-48(14:1)
+*     MOVE ALL ZEROES TO W-BYTEMAP-48
+*     MOVE "1"        TO W-BYTEMAP-48(4:1)
+*     MOVE "1"        TO W-BYTEMAP-48(14:1)
+*
+**G.02.21 - Anfang
+***   IF  GEODATA-YES
+***       MOVE "1"    TO W-BYTEMAP-48(41:1)
+***   END-IF
+**G.02.21 - Anfang
+*
+*     MOVE  LOW-VALUE TO W-BITMAP
+*     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+*     MOVE 8        TO W-BUFFER-LEN
+*     MOVE W-BITMAP TO W-BUFFER
+*
+*
+***  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
+*     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
+*     ADD 12 TO W-BUFFER-LEN
 
-*G.02.21 - Anfang
-**   IF  GEODATA-YES
-**       MOVE "1"    TO W-BYTEMAP-48(41:1)
-**   END-IF
-*G.02.21 - Anfang
-
-     MOVE  LOW-VALUE TO W-BITMAP
-     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
-     MOVE 8        TO W-BUFFER-LEN
-     MOVE W-BITMAP TO W-BUFFER
-
-**  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
-     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
-     ADD 12 TO W-BUFFER-LEN
-
-*G.02.21 - Anfang
-**   IF  GEODATA-YES
-**       MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
-**       ADD 20 TO W-BUFFER-LEN
-**   END-IF
-*G.02.21 - Ende
-
-**  +++> jetzt in die Nachricht einbauen
-     MOVE 48           TO W207-XBMP
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
-
+     
+**G.02.21 - Anfang
+***   IF  GEODATA-YES
+***       MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
+***       ADD 20 TO W-BUFFER-LEN
+***   END-IF
+**G.02.21 - Ende
+*
+***  +++> jetzt in die Nachricht einbauen
+*     MOVE 48           TO W207-XBMP
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+     
+*G.03.20 - Ende
      .
  D318-99.
      EXIT.

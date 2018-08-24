@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2018-08-03
-* Letzte Version   :: G.02.51
+* Letzte Aenderung :: 2018-08-23
+* Letzte Version   :: G.02.52
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -68,6 +68,9 @@
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
+*G.02.52|2018-08-23| kus | R7-390:
+*       |          |     | - Kilometerstand in 48-8 TND
+*-------|----------|-----|-------------------------------------------*
 *G.02.51|2018-08-03| kus | R7-365/DKVCHIP-6:
 *       |          |     | - neues KZ-VERF fuer Chip 
 *-------|----------|-----|---------------------------------------*
@@ -1395,7 +1398,9 @@
 *G.02.13 - Ende
          WHEN VERF-OR    SET AS-VERF-OR TO TRUE
          WHEN VERF-SH    SET AS-VERF-SH TO TRUE
-*        WHEN VERF-TN    SET AS-VERF-TN TO TRUE
+*G.02.52 - TND jetzt auch eigenes Verfahren
+         WHEN VERF-TN    SET AS-VERF-TN TO TRUE
+*G.02.52 - Ende
          WHEN VERF-TO    SET AS-VERF-TO TO TRUE
          WHEN VERF-UT    SET AS-VERF-UT TO TRUE
 
@@ -2927,12 +2932,44 @@
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-TND TO TRUE
 
-*G.02.18 - Anfang
-**  ---> und BMP48 aufbereiten
-     PERFORM E310-BMP48-DEFAULT
-*G.02.18 - Ende
+*G.02.52 - Default geht nicht mehr, da 48-8 jetzt auch
+**G.02.18 - Anfang
+***  ---> und BMP48 aufbereiten
+*     PERFORM E310-BMP48-DEFAULT
+**G.02.18 - Ende
 
-     continue
+**  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
+**  --->          noch Fahrerdaten, die einzustellen sind (48.8))
+**  ---> zunächst die BitMap erstellen
+     MOVE ALL ZEROES TO W-BYTEMAP-48
+     MOVE  LOW-VALUE TO W-BITMAP
+     MOVE SPACES     TO W207-XCOBVAL
+     MOVE 8          TO W207-XCOBLEN
+    
+**  +++> jetzt das Subfeld 4 (Fixwert)
+     MOVE "1"        TO W-BYTEMAP-48(4:1)
+     MOVE "0000000001" TO W207-XCOBVAL (W207-XCOBLEN + 1:)
+     ADD 10 TO W207-XCOBLEN
+
+**  +++> und jetzt das Subfeld 8 (Kfz-Daten)
+     IF  KFZ-YES AND W-48-LEN > ZERO
+         MOVE W-BMP48-VAL (1:W-48-LEN) TO W207-XCOBVAL (W207-XCOBLEN + 1:)
+         ADD W-48-LEN TO W207-XCOBLEN
+         MOVE "1"     TO W-BYTEMAP-48(8:1)
+     END-IF
+
+**  +++>  nun die Bitmap einfügen
+     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+     MOVE W-BITMAP TO W207-XCOBVAL (1:8)
+     
+     MOVE 48 TO W207-XBMP
+     PERFORM L100-ADD-BMP
+     IF  ENDE
+         EXIT SECTION
+     END-IF
+     
+*     continue
+*G.02.52 - Ende
      .
  D318-99.
      EXIT.
