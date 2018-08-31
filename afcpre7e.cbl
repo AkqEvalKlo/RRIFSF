@@ -41,8 +41,8 @@
 
 
 *****************************************************************
-* Letzte Aenderung :: 2018-05-24
-* Letzte Version   :: G.01.46
+* Letzte Aenderung :: 2018-08-31
+* Letzte Version   :: G.01.47
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -56,6 +56,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar
+*-------|----------|-----|-------------------------------------------*
+*G.01.47|2018-08-31| kus | R7-395:
+*       |          |     | - ENI Teilgenehmigung hat kein BMP 30
 *-------|----------|-----|-------------------------------------------*
 *G.01.46|2018-05-24| kus | RRIFSF-3:
 *       |          |     | - Umsetzung Roadrunner (Routkz = 25)
@@ -2057,18 +2060,22 @@
 *G.01.25 - Ende
 **      ---> bei Teilgenehmigung, muss vorhanden sein
          WHEN 2
-           IF IMSG-TBMP(30) = 0
-              MOVE "Teilgenehmigung/Ablehnung ohne BMP 30"
-                TO DATEN-BUFFER1
-              MOVE "Transaktion wird mit AC 81 beantwortet"
-                TO DATEN-BUFFER2
-              MOVE 81 TO W-AC
+*G.01.47 - ENI Teilgenehmigung hat kein BMP 30 in Antwort
+           IF NOT VERF-AG
+               IF IMSG-TBMP(30) = 0
+                  MOVE "Teilgenehmigung/Ablehnung ohne BMP 30"
+                    TO DATEN-BUFFER1
+                  MOVE "Transaktion wird mit AC 81 beantwortet"
+                    TO DATEN-BUFFER2
+                  MOVE 81 TO W-AC
 *G.01.24 - Anfang
 *             SET ENDE TO TRUE
 *G.01.24 - Ende
-              PERFORM Z002-PROGERR
-              EXIT SECTION
+                  PERFORM Z002-PROGERR
+                  EXIT SECTION
+               END-IF
            END-IF
+*G.01.47 - Ende
 **      ---> bei Ablehnung, muss = bmp4 aus Anfrage sein
          WHEN OTHER
            IF IMSG-TBMP(30) = 0
