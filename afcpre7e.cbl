@@ -41,8 +41,8 @@
 
 
 *****************************************************************
-* Letzte Aenderung :: 2018-08-31
-* Letzte Version   :: G.01.47
+* Letzte Aenderung :: 2018-09-11
+* Letzte Version   :: G.02.01
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -50,12 +50,15 @@
 * Kurzbeschreibung :: auf Termial-Nachrichten vom Typ 210 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: RRIFSF-3
+* Auftrag          :: R7-376
 *
 * Aenderungen
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar
+*-------|----------|-----|-------------------------------------------*
+*G.02.01|2018-09-11| kus | R7-376:
+*       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
 *-------|----------|-----|-------------------------------------------*
 *G.01.47|2018-08-31| kus | R7-395:
 *       |          |     | - ENI Teilgenehmigung hat kein BMP 30
@@ -835,7 +838,9 @@
 **          ---> Mapping ROUTKZ <-> APPL_KZ.IFSFAC
 **          --->
 **          ---> hier muss ggf. bei weiteren AS'sen erweitert werden
- 01          VERF-ROUTKZ         PIC 9(02).
+*G.01.XX - Refactoring fuer AS-Verfahren
+ 01          VERF-AS            PIC 9(02) VALUE ZEROS.
+*G.01.XX - Ende
           88 VERF-AG                         VALUE 15.
           88 VERF-AV                         VALUE 05.
           88 VERF-BP                         VALUE 14.
@@ -1118,8 +1123,10 @@
      DECLARE KEYNAMEN_CURS CURSOR FOR
          SELECT   ROUTKZ, CARDID, KEYNAME, ISOGEN, ISOVERS
            FROM  =KEYNAMEN
-          WHERE   ROUTKZ = :ROUTKZ of KEYNAMEN
-         ORDER  BY CARDID
+*G.01.XX - alle laden
+*          WHERE   ROUTKZ = :ROUTKZ of KEYNAMEN
+         ORDER  BY ROUTKZ, CARDID
+*G.01.XX - Ende
          BROWSE  ACCESS
  END-EXEC
 
@@ -1225,19 +1232,30 @@
 **  ---> Initialisierung Felder
      PERFORM C000-INIT
 
-**  ---> holen Parameter AS-ROUTKZ
-     MOVE "AS-ROUTKZ" TO STUP-PORTION
+*G.01.XX - neuen Parameter AS-VERF laden und nicht mehr AS-ROUTKZ
+***  ---> holen Parameter AS-ROUTKZ
+*     MOVE "AS-ROUTKZ" TO STUP-PORTION
+*     PERFORM P950-GETPARAMTEXT
+*     IF  PRG-ABBRUCH
+*         EXIT SECTION
+*     END-IF
+     
+**  ---> holen Parameter AS-VERF
+     MOVE "AS-VERF" TO STUP-PORTION
      PERFORM P950-GETPARAMTEXT
      IF  PRG-ABBRUCH
          EXIT SECTION
      END-IF
 
+
 **  ---> holen Parameter für zuständiges AS
-     MOVE STUP-TEXT (1:STUP-RESULT) TO ROUTKZ of FCPARAM
-                                       W-ROUTKZ
+     MOVE STUP-TEXT (1:STUP-RESULT) TO VERF-AS
+                                       ROUTKZ of FCPARAM
+*                                       W-ROUTKZ
                                        S-ROUTKZ
-**                                    ---> für AC-Mapping-Tabelle
-                                       VERF-ROUTKZ
+***                                    ---> für Artikelmapper
+*                                       VERF-ROUTKZ     
+*G.01.XX - Ende     
 
 **  ---> Anwendung setzen für MAC-Berechnung
      EVALUATE TRUE
@@ -1314,12 +1332,13 @@
          EXIT SECTION
      END-IF
 
+*G.01.XX - zusätzlich AIID mit in diese Tabelle laden + alle Eintraege aus KEYNAMEN
 **  ---> AS Schlüssel MACKEYA und PACKEYA aus Tabelle =KEYNAMEN einlesen
 **  ---> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 **  ---> !!!! zunächstmal wird nur der erste eingelesen !!!!
 **  ---> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 **  ---> ersten Eintrag holen
-     MOVE W-ROUTKZ TO ROUTKZ of KEYNAMEN
+*     MOVE W-ROUTKZ TO ROUTKZ of KEYNAMEN
      PERFORM S930-OPEN-KEYNAMEN-CURSOR
      PERFORM S940-FETCH-KEYNAMEN-CURSOR
 
@@ -1352,6 +1371,7 @@
          MOVE TK-HEXKEY (1) TO W-MACKEYA
          MOVE TK-HEXKEY (1) TO W-PACKEYA (1:4)
 *     END-IF
+*G.01.XX - Ende
 
 **  ---> bestimmen Verfahren für AC-Mapping
      EVALUATE TRUE
@@ -1542,6 +1562,9 @@
      MOVE IMSG-TERMID  TO W-FRE-TERMID
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
      MOVE IMSG-DATLEN  TO W-FRE-DATLEN
+*G.01.XX - ROUTKZ von Drehscheibe + Laden Schluessel
+     MOVE IMSG-ROUTKZ  TO W-ROUTKZ   
+*G.01.XX - Ende
 
 **  ---> erstmal die Nachrichten aus dem Hinweg aus dem MEMLOG holen
      PERFORM C050-GET-MEMLOG
@@ -2225,7 +2248,10 @@
       SET MAC-NO TO TRUE
       IF IMSG-TBMP(64) = 1
 *G.01.14 - Anfang
-         EVALUATE W-ROUTKZ
+*G.01.XX - AS-VERF hier verwenden
+*        EVALUATE W-ROUTKZ
+         EVALUATE VERF-AS
+*G.01.XX - Ende
           WHEN 22
                PERFORM F915-ASMAC-DUKPT
           WHEN OTHER
@@ -2523,8 +2549,10 @@
  C300-AS-SPEZIELL SECTION.
  C300-00.
 **  ---> verzweigen je nach ROUTKZ
-     EVALUATE W-ROUTKZ
-
+*G.01.XX - VERF-AS verwenden hier
+*     EVALUATE W-ROUTKZ
+     EVALUATE VERF-AS
+*G.01.XX - Ende
          WHEN 05     PERFORM D305-AVIA
          WHEN 07     PERFORM D307-SHELL
          WHEN 10     PERFORM D310-TOTAL
@@ -2552,7 +2580,10 @@
 
          WHEN OTHER
                  SET ENDE TO TRUE
-                 MOVE W-ROUTKZ TO D-NUM4
+*G.01.XX - jetzt VERF-AS verwenden
+*                 MOVE W-ROUTKZ TO D-NUM4
+                 MOVE VERF-AS TO D-NUM4
+*G.01.XX - Ende
                  STRING  "Keine speziellen Verarbeitungsregeln "
                          "für Rout-KZ = "
                          D-NUM4
@@ -3060,7 +3091,10 @@
  E900-00.
      MOVE 1105 TO ERROR-NR of GEN-ERROR
      MOVE "=FCPARAM für: @" TO DATEN-BUFFER1
-     MOVE W-ROUTKZ  TO D-NUM4
+*G.01.XX - VERF-AS jetzt
+*     MOVE W-ROUTKZ  TO D-NUM4
+     MOVE VERF-AS  TO D-NUM4
+*G.01.XX - Ende
      MOVE S-ISONTYP TO D-NUM4M
      MOVE S-BMP     TO D-NUM4N
      MOVE W-CARDID  TO D-NUM4OV
@@ -4422,7 +4456,10 @@
              WHEN space  continue
 
              WHEN OTHER  SET ENDE TO TRUE
-                         MOVE W-ROUTKZ TO D-NUM4
+*G.01.XX - VERF-AS jetzt
+*                         MOVE W-ROUTKZ TO D-NUM4
+                         MOVE VERF-AS TO D-NUM4
+*G.01.XX - Ende
                          STRING  "Unbekannte Verarbeitungsregeln "
                                  "für Rout-KZ = "
                                  D-NUM4
