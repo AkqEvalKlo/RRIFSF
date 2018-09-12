@@ -838,9 +838,9 @@
 **          ---> Mapping ROUTKZ <-> APPL_KZ.IFSFAC
 **          --->
 **          ---> hier muss ggf. bei weiteren AS'sen erweitert werden
-*G.01.XX - Refactoring fuer AS-Verfahren
+*G.02.01 - Refactoring fuer AS-Verfahren
  01          VERF-AS            PIC 9(02) VALUE ZEROS.
-*G.01.XX - Ende
+*G.02.01 - Ende
           88 VERF-AG                         VALUE 15.
           88 VERF-AV                         VALUE 05.
           88 VERF-BP                         VALUE 14.
@@ -1123,10 +1123,10 @@
      DECLARE KEYNAMEN_CURS CURSOR FOR
          SELECT   ROUTKZ, CARDID, KEYNAME, ISOGEN, ISOVERS
            FROM  =KEYNAMEN
-*G.01.XX - alle laden
+*G.02.01 - alle laden
 *          WHERE   ROUTKZ = :ROUTKZ of KEYNAMEN
          ORDER  BY ROUTKZ, CARDID
-*G.01.XX - Ende
+*G.02.01 - Ende
          BROWSE  ACCESS
  END-EXEC
 
@@ -1232,7 +1232,7 @@
 **  ---> Initialisierung Felder
      PERFORM C000-INIT
 
-*G.01.XX - neuen Parameter AS-VERF laden und nicht mehr AS-ROUTKZ
+*G.02.01 - neuen Parameter AS-VERF laden und nicht mehr AS-ROUTKZ
 ***  ---> holen Parameter AS-ROUTKZ
 *     MOVE "AS-ROUTKZ" TO STUP-PORTION
 *     PERFORM P950-GETPARAMTEXT
@@ -1255,7 +1255,7 @@
                                        S-ROUTKZ
 ***                                    ---> für Artikelmapper
 *                                       VERF-ROUTKZ     
-*G.01.XX - Ende     
+*G.02.01 - Ende     
 
 **  ---> Anwendung setzen für MAC-Berechnung
      EVALUATE TRUE
@@ -1332,7 +1332,7 @@
          EXIT SECTION
      END-IF
 
-*G.01.XX - zusätzlich AIID mit in diese Tabelle laden + alle Eintraege aus KEYNAMEN
+*G.02.01 - zusätzlich AIID mit in diese Tabelle laden + alle Eintraege aus KEYNAMEN
 **  ---> AS Schlüssel MACKEYA und PACKEYA aus Tabelle =KEYNAMEN einlesen
 **  ---> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 **  ---> !!!! zunächstmal wird nur der erste eingelesen !!!!
@@ -1371,7 +1371,7 @@
          MOVE TK-HEXKEY (1) TO W-MACKEYA
          MOVE TK-HEXKEY (1) TO W-PACKEYA (1:4)
 *     END-IF
-*G.01.XX - Ende
+*G.02.01 - Ende
 
 **  ---> bestimmen Verfahren für AC-Mapping
      EVALUATE TRUE
@@ -1562,9 +1562,9 @@
      MOVE IMSG-TERMID  TO W-FRE-TERMID
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
      MOVE IMSG-DATLEN  TO W-FRE-DATLEN
-*G.01.XX - ROUTKZ von Drehscheibe + Laden Schluessel
+*G.02.01 - ROUTKZ von Drehscheibe + Laden Schluessel
      MOVE IMSG-ROUTKZ  TO W-ROUTKZ   
-*G.01.XX - Ende
+*G.02.01 - Ende
 
 **  ---> erstmal die Nachrichten aus dem Hinweg aus dem MEMLOG holen
      PERFORM C050-GET-MEMLOG
@@ -2248,10 +2248,10 @@
       SET MAC-NO TO TRUE
       IF IMSG-TBMP(64) = 1
 *G.01.14 - Anfang
-*G.01.XX - AS-VERF hier verwenden
+*G.02.01 - AS-VERF hier verwenden
 *        EVALUATE W-ROUTKZ
          EVALUATE VERF-AS
-*G.01.XX - Ende
+*G.02.01 - Ende
           WHEN 22
                PERFORM F915-ASMAC-DUKPT
           WHEN OTHER
@@ -2549,10 +2549,10 @@
  C300-AS-SPEZIELL SECTION.
  C300-00.
 **  ---> verzweigen je nach ROUTKZ
-*G.01.XX - VERF-AS verwenden hier
+*G.02.01 - VERF-AS verwenden hier
 *     EVALUATE W-ROUTKZ
      EVALUATE VERF-AS
-*G.01.XX - Ende
+*G.02.01 - Ende
          WHEN 05     PERFORM D305-AVIA
          WHEN 07     PERFORM D307-SHELL
          WHEN 10     PERFORM D310-TOTAL
@@ -2580,10 +2580,10 @@
 
          WHEN OTHER
                  SET ENDE TO TRUE
-*G.01.XX - jetzt VERF-AS verwenden
+*G.02.01 - jetzt VERF-AS verwenden
 *                 MOVE W-ROUTKZ TO D-NUM4
                  MOVE VERF-AS TO D-NUM4
-*G.01.XX - Ende
+*G.02.01 - Ende
                  STRING  "Keine speziellen Verarbeitungsregeln "
                          "für Rout-KZ = "
                          D-NUM4
@@ -3091,10 +3091,10 @@
  E900-00.
      MOVE 1105 TO ERROR-NR of GEN-ERROR
      MOVE "=FCPARAM für: @" TO DATEN-BUFFER1
-*G.01.XX - VERF-AS jetzt
+*G.02.01 - VERF-AS jetzt
 *     MOVE W-ROUTKZ  TO D-NUM4
      MOVE VERF-AS  TO D-NUM4
-*G.01.XX - Ende
+*G.02.01 - Ende
      MOVE S-ISONTYP TO D-NUM4M
      MOVE S-BMP     TO D-NUM4N
      MOVE W-CARDID  TO D-NUM4OV
@@ -4456,10 +4456,10 @@
              WHEN space  continue
 
              WHEN OTHER  SET ENDE TO TRUE
-*G.01.XX - VERF-AS jetzt
+*G.02.01 - VERF-AS jetzt
 *                         MOVE W-ROUTKZ TO D-NUM4
                          MOVE VERF-AS TO D-NUM4
-*G.01.XX - Ende
+*G.02.01 - Ende
                          STRING  "Unbekannte Verarbeitungsregeln "
                                  "für Rout-KZ = "
                                  D-NUM4
