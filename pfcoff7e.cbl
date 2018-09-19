@@ -6372,11 +6372,14 @@
  Z002-PROGERR SECTION.
  Z002-00.
 **  ---> Angaben für Terminal- und Trace-Nummer in BUFFER5 einstellen
-     STRING  "WEAT-Term-Nr./Trace-Nr.: "
-             W-TERMNR "/" W-TRACENR
+*G.07.01 - Fehlermeldung erweitert
+     STRING  "TermNr/TraceNr/RoutKZ/Verf/Cardid: "
+             W-TERMNR "/" W-TRACENR "/" IMSG-ROUTKZ "/"
+             VERF-AS  "/" W-CARDID
                  delimited by size
        INTO  DATEN-BUFFER5
      END-STRING
+*G.07.01 - Ende
 
 **  ---> holen Daten für Fehlertabelle
      MOVE 1 TO ERR-STAT OF GEN-ERROR
