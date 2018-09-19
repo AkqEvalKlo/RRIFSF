@@ -816,9 +816,10 @@
      05      S2-LFDNR             PIC S9(04) COMP VALUE ZEROS.
 *kl20180405 - G.01.45 - Ende
 
+*G.02.01 - Tabelle auf 150 vergroessert
 **          ---> AS-Keytabelle
  01          TK-KEYNAMEN.
-     05      TK-KEYNAMEN-TABELLE occurs 10.
+     05      TK-KEYNAMEN-TABELLE occurs 150.
       10     TK-ROUTKZ           PIC S9(04).
       10     TK-CARDID           PIC S9(04).
       10     TK-KEYNAME          PIC X(08).
@@ -827,7 +828,8 @@
       10     TK-HEXKEY           PIC X(04).
 
  01          TK-MAX              PIC S9(04) COMP.
- 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 10.
+ 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 150.
+*G.02.01 - Ende
 
 **          ---> Mapping-Tabelle für 3-stellige/2-stellige AC's
  01          TAC-MAP-TABELLE.
@@ -1347,7 +1349,7 @@
              UNTIL   KEYNAMEN-EOD
              or      KEYNAMEN-NOK
              or      C9-COUNT > TK-TAB-MAX
-             or      C4-I1 > 1
+*             or      C4-I1 > 1
 
          MOVE ROUTKZ  of KEYNAMEN TO TK-ROUTKZ  (C4-I1)
          MOVE CARDID  of KEYNAMEN TO TK-CARDID  (C4-I1)
@@ -1367,10 +1369,10 @@
 **  ---> schliessen Cursor
      PERFORM S950-CLOSE-KEYNAMEN-CURSOR
      MOVE C9-COUNT TO TK-MAX
-*     IF  TK-MAX = 1
+     IF  TK-MAX = 1
          MOVE TK-HEXKEY (1) TO W-MACKEYA
          MOVE TK-HEXKEY (1) TO W-PACKEYA (1:4)
-*     END-IF
+     END-IF
 *G.02.01 - Ende
 
 **  ---> bestimmen Verfahren für AC-Mapping
@@ -1562,9 +1564,6 @@
      MOVE IMSG-TERMID  TO W-FRE-TERMID
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
      MOVE IMSG-DATLEN  TO W-FRE-DATLEN
-*G.02.01 - ROUTKZ von Drehscheibe + Laden Schluessel
-     MOVE IMSG-ROUTKZ  TO W-ROUTKZ   
-*G.02.01 - Ende
 
 **  ---> erstmal die Nachrichten aus dem Hinweg aus dem MEMLOG holen
      PERFORM C050-GET-MEMLOG
@@ -1826,6 +1825,10 @@
      MOVE MDNR    OF TXILOG70    TO W-MDNR
      MOVE TSNR    OF TXILOG70    TO W-TSNR
      MOVE CARDID  OF TXILOG70    TO W-CARDID
+     
+*G.02.01 - ROUTKZ aus TXILOG70
+     MOVE ROUTKZ  OF TXILOG70    TO W-ROUTKZ   
+*G.02.01 - Ende
 
 **  ---> Terminal-Nr. für ERRLOG aufbereiten
      MOVE TERMNR    of TXILOG70    TO P-HEX16
@@ -2248,7 +2251,8 @@
       SET MAC-NO TO TRUE
       IF IMSG-TBMP(64) = 1
 *G.01.14 - Anfang
-*G.02.01 - AS-VERF hier verwenden
+*G.02.01 - AS-VERF hier verwenden und Key bestimmen
+         PERFORM D200-FIX-KEY
 *        EVALUATE W-ROUTKZ
          EVALUATE VERF-AS
 *G.02.01 - Ende
@@ -2693,6 +2697,51 @@
 
      .
  C500-99.
+     EXIT.
+     
+******************************************************************
+* Key bestimmen
+*G.02.01 - muss bestimmt werden
+******************************************************************
+ D200-FIX-KEY SECTION.
+ D200-00.
+**  ---> wenn Schlüsseltabelle nur mit einem belegt ist, wieder zurück
+     IF  TK-MAX = 1
+         MOVE 1 TO C4-I1
+         EXIT SECTION
+     END-IF
+
+**  ---> nun muss doch gesucht werden
+     PERFORM VARYING C4-I1 FROM 1 BY 1
+             UNTIL   C4-I1 > TK-MAX
+
+         IF  TK-CARDID (C4-I1) NOT = W-CARDID
+         OR  TK-ROUTKZ (C4-I1) NOT = W-ROUTKZ
+**          ---> nächsten suchen
+             EXIT PERFORM CYCLE
+         END-IF
+
+**      ---> Schlüssel zur Verfügung stellen
+         MOVE TK-HEXKEY (C4-I1) TO W-MACKEYA
+         MOVE TK-HEXKEY (C4-I1) TO W-PACKEYA (1:4)
+         EXIT SECTION
+     END-PERFORM
+
+**  ---> hier sind keine Schlüssen gefunden worden
+     SET ENDE TO TRUE
+     MOVE W-ROUTKZ TO D-NUM4
+     MOVE W-CARDID TO D-NUM4OV
+     MOVE "Keine AS-Schlüssel in =KEYNAMEN gefunden für:" TO DATEN-BUFFER1
+     STRING  "ROUTKZ / CARDID = "
+             D-NUM4
+             " / "
+             D-NUM4OV
+                 delimited by size
+       INTO  DATEN-BUFFER2
+     END-STRING
+     PERFORM Z002-PROGERR
+     .
+ D200-99.
      EXIT.
 
 ******************************************************************
@@ -4531,9 +4580,11 @@
  Z002-00.
 **  ---> Angaben für Terminal- und Trace-Nummer in BUFFER5 einstellen
 *G.02.01 - Fehlermeldung erweitert
+     MOVE W-CARDID TO D-NUM2
+     MOVE W-ROUTKZ TO D-NUM4
      STRING  "TermNr/TraceNr/RoutKZ/Verf/Cardid: "
-             W-TERMNR "/" W-TRACENR "/" IMSG-ROUTKZ "/"
-             VERF-AS  "/" W-CARDID
+             W-TERMNR "/" W-TRACENR "/" D-NUM4 "/"
+             VERF-AS  "/" D-NUM2
                  delimited by size
        INTO  DATEN-BUFFER5
      END-STRING

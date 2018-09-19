@@ -967,9 +967,10 @@
      05      S2-LFDNR             PIC S9(04) COMP VALUE ZEROS.
 *kl20180405 - G.01.06 - Ende
 
+*G.02.01 - Tabelle auf 150 vergroessert
 **          ---> AS-Keytabelle
  01          TK-KEYNAMEN.
-     05      TK-KEYNAMEN-TABELLE occurs 10.
+     05      TK-KEYNAMEN-TABELLE occurs 150.
       10     TK-ROUTKZ           PIC S9(04).
       10     TK-CARDID           PIC S9(04).
       10     TK-KEYNAME          PIC X(08).
@@ -979,11 +980,10 @@
       10     TK-HEXISO           PIC X(02).
 *G.02.01 - AIID hier mit speichern
       10     TK-AIID             PIC X(11).
-*G.02.01 - Ende
 
  01          TK-MAX              PIC S9(04) COMP.
- 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 10.
-
+ 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 150.
+*G.02.01 - Ende
 
 **          --->
  01          W-TEILSTRING-TABELLE.
@@ -2429,7 +2429,7 @@
 
 *G.02.01 - auch ROUTKZ Vergleich, da nun alle Eintraege geladen
          IF  TK-CARDID (C4-I1) NOT = W-CARDID
-         AND TK-ROUTKZ (C4-I1) NOT = W-ROUTKZ
+         OR  TK-ROUTKZ (C4-I1) NOT = W-ROUTKZ
 *G.02.01 - Ende
 **          ---> nächsten suchen
              EXIT PERFORM CYCLE
@@ -5088,20 +5088,23 @@
          END-EXEC
      END-IF
      
-     IF NOT SQLCODE OF SQLCA = ZERO
-         MOVE  SQLCODE OF SQLCA    TO D-NUM4
-         STRING "Fehler bei LESEN FCAIID: ", D-NUM4
-         DELIMITED BY SIZE INTO DATEN-BUFFER1
-         MOVE ROUTKZ OF KEYNAMEN TO D-NUM4-ROUTKZ
-         MOVE CARDID OF KEYNAMEN TO D-NUM4-CARDID
-         STRING "ROUTKZ= ",
-                 D-NUM4-ROUTKZ,
-                 " / CARDID= ",
-                 D-NUM4-CARDID,
-                 " oder 0"
-         DELIMITED BY SIZE INTO DATEN-BUFFER2
-         PERFORM Z002-PROGERR
-     END-IF
+     EVALUATE SQLCODE OF SQLCA
+        WHEN 0      CONTINUE
+** ---> Dummy AIID, fuer RoutKZ, die nicht gepflegt sind
+        WHEN 100    MOVE "000000" TO AIID OF FCAIID
+        WHEN OTHER  MOVE  SQLCODE OF SQLCA    TO D-NUM4
+                    STRING "Fehler bei LESEN FCAIID: ", D-NUM4
+                    DELIMITED BY SIZE INTO DATEN-BUFFER1
+                    MOVE ROUTKZ OF KEYNAMEN TO D-NUM4M
+                    MOVE CARDID OF KEYNAMEN TO D-NUM4N
+                    STRING "ROUTKZ= ",
+                            D-NUM4M,
+                            " / CARDID= ",
+                            D-NUM4N,
+                            " oder 0"
+                    DELIMITED BY SIZE INTO DATEN-BUFFER2
+                    PERFORM Z002-PROGERR
+     END-EVALUATE
 
      .
  S960-99.
@@ -5395,9 +5398,11 @@
  Z002-00.
 **  ---> Angaben für Terminal- und Trace-Nummer in BUFFER5 einstellen
 *G.02.01 - Fehlermeldung erweitert
+     MOVE W-CARDID TO D-NUM2
+     MOVE W-ROUTKZ TO D-NUM4
      STRING  "TermNr/TraceNr/RoutKZ/Verf/Cardid: "
-             W-TERMNR "/" W-TRACENR "/" IMSG-ROUTKZ "/"
-             VERF-AS  "/" W-CARDID
+             W-TERMNR "/" W-TRACENR "/" D-NUM4 "/"
+             VERF-AS  "/" D-NUM2
                  delimited by size
        INTO  DATEN-BUFFER5
      END-STRING
