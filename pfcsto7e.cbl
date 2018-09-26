@@ -3730,7 +3730,7 @@
         IF W-ERF-CHIP
             MOVE "q"         TO KZ-VERF        OF TXILOG70
         ELSE
-            MOVE "k"         TO KZ-VERF        OF TXILOG70
+            MOVE "m"         TO KZ-VERF        OF TXILOG70
         END-IF
      ELSE
         IF W-ERF-CHIP
