@@ -45,8 +45,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2018-08-03
-* Letzte Version   :: G.01.12
+* Letzte Aenderung :: 2018-09-26
+* Letzte Version   :: G.02.01
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -54,12 +54,15 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1420 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: RRIFSF-4 F1ICC-114
+* Auftrag          :: R7-404
 *
 * Aenderungen:
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
+*-------|----------|-----|---------------------------------------*
+*G.02.01|2018-09-26| kus | R7-404:
+*       |          |     | - KZ-VERF fuer Offl. not Chip "m"
 *-------|----------|-----|---------------------------------------*
 *G.01.12|2018-08-03| kus | R7-365/DKVCHIP-8:
 *       |          |     | - neues KZ-VERF fuer Chip 
@@ -3672,7 +3675,9 @@
         IF W-ERF-CHIP
             MOVE "q"         TO KZ-VERF        OF TXILOG70
         ELSE
-            MOVE "k"         TO KZ-VERF        OF TXILOG70
+*G.02.01 - jetzt wirklich "m" und nicht mehr "k"
+            MOVE "m"         TO KZ-VERF        OF TXILOG70
+*G.02.01 - Ende
         END-IF
      ELSE
         IF W-ERF-CHIP
