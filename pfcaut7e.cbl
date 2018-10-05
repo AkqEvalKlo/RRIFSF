@@ -1994,8 +1994,10 @@
 
      END-IF
 
-     IF W-ERF-CHIP
+*G.01.XX - Kontaktlos Chip hier auch
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
         SET ERF-SPUR2 TO TRUE
+*G.01.XX - Ende
      ELSE
        IF IMSG-TBMP(35) = 1
           IF  IMSG-TBMP(02) = 1 or IMSG-TBMP(14) = 1
@@ -3791,7 +3793,9 @@
 *G.03.04 - Anfang
 
 *    Pruefen BMP 22 auf Gueltigkeit (Pos 7 = 05 = ICC)
-     IF W-ERF-CHIP
+*G.01.XX - Kontaktlos Chip hier auch
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.01.XX - Ende
         IF IMSG-TBMP(14) = 1
            CONTINUE
         ELSE
@@ -4509,7 +4513,9 @@
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART of TXILOG70
 
 *kl20180315 - G.03.12 - Unterscheidung zwischen Chip und Spur2
-     IF W-ERF-CHIP
+*G.01.XX - Kontaktlos Chip Karte beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.01.XX - Ende
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
         MOVE   "r"       TO KZ-VERF        of TXILOG70
