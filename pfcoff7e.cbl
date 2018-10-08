@@ -60,7 +60,7 @@
 * Kurzbeschreibung :: Die Terminal-Anfragen werden von diesem
 * Kurzbeschreibung :: Programm direkt beantwortet.
 * Package          :: ICC
-* Auftrag          :: R7-376
+* Auftrag          :: DKVCHIP-23 DKVCHIP-24
 *
 * Aenderungen:
 *
@@ -69,6 +69,15 @@
 *-------|----------|-----|-------------------------------------------*
 *G.07.02|2018-10-05| kus | DKVCHIP-23:
 *       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | DKVCHIP-24:
+*       |          |     | - Bei Offlinern mit Chip Erfassung 
+*       |          |     |   BMP 2 und 14 in TS-Anfrage
+*       |          |     | R7-409:
+*       |          |     | - bei nicht gekennzeichneten Wiederholern
+*       |          |     |   kein insert/update mehr
+*       |          |     |   -> Änderung aus G.03.00 rückgängig 
+*       |          |     | - wenn Term/Trace bereits in TXILOG70
+*       |          |     |   jetzt AC 81 und kein Logging
 *-------|----------|-----|-------------------------------------------*
 *G.07.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -592,12 +601,14 @@
      05      TXNLOG70-FLAG       PIC 9       VALUE ZEROS.
           88 TXNLOG70-OK                     VALUE ZEROS.
           88 TXNLOG70-NOK                    VALUE 1.
-
-*G.03.00 - Anfang
-     05      DUPLICATE-KEY       PIC 9       VALUE ZEROS.
-          88 DUPLICATE-KEY-NO                VALUE ZEROS.
-          88 DUPLICATE-KEY-YES               VALUE 1.
-*G.03.00 - Ende
+          
+*G.07.02 - kein Update mehr bei bereits vorhandenen, Änderung G.03.00 rückgängig
+**G.03.00 - Anfang
+*     05      DUPLICATE-KEY       PIC 9       VALUE ZEROS.
+*          88 DUPLICATE-KEY-NO                VALUE ZEROS.
+*          88 DUPLICATE-KEY-YES               VALUE 1.
+**G.03.00 - Ende
+*G.07.02 - Ende
 
      05      PRM-FLAG            PIC X     VALUE SPACE.
           88 PRM-NOT-FOUND                 VALUE SPACE.
@@ -1201,6 +1212,12 @@
     INVOKE =FCAIID AS FCAIID
  END-EXEC
 *G.07.01 - Ende
+
+*G.07.02 - zum Prüfen ob Trx schon vorhanden
+ EXEC SQL
+    INVOKE =TXILOG70 AS TXILOG70-CHK
+ END-EXEC
+*G.07.02 - Ende
 
 
 ******************************************************************
@@ -1849,6 +1866,14 @@
 *    MOVE IMSG-NTYPE    TO W-NTYPE
 *G.02.02 - Ende
 
+
+*G.07.02 - Pruefen, ob Nachricht mit Term/Trace bereits vorhanden
+     PERFORM S182-CHECK-TXILOG70
+     IF W-AC > ZERO OR ENDE
+         EXIT SECTION 
+     END-IF
+*G.07.02 - Ende
+
 **  ---> Abwicklungs-KZ bestimmen (Zahlung/Gutschrift)
 
 *G.06.25 - Anfang
@@ -1989,13 +2014,10 @@
 **      ---> KEINE Spur 2 vorhanden
          IF  IMSG-TBMP(02) = 1 and IMSG-TBMP(14) = 1
 *G.06.20 - Fehler, wenn BMP 55 bei Handeingabe
-*G.01.XX -
+*G.07.02 - Chip Erfassung hat BMP 2 und 14
              IF IMSG-TBMP(55) = 1
 **          ---> dafür aber PAN und Ablaufdatum
                  SET ERF-CHIP TO TRUE
-                 MOVE IMSG-CF(IMSG-TPTR(02):IMSG-TLEN(02)) TO W-KANR
-                 MOVE IMSG-TLEN(02)                        TO W-KANR-LEN
-                 MOVE IMSG-CF(IMSG-TPTR(14):IMSG-TLEN(14)) TO W-ABL
 *                 SET ERF-ERROR TO TRUE
 *                 MOVE 30  TO W-AC
 *                 MOVE 2201 TO ERROR-NR of GEN-ERROR
@@ -2003,11 +2025,13 @@
 *                 MOVE "BMP 2, 14 und BMP 55 nicht korrekt@" TO DATEN-BUFFER2
 *                 PERFORM Z002-PROGERR
 *                 EXIT SECTION
+             ELSE 
+                SET ERF-MANUELL TO TRUE
              END-IF
-*G.01.XX - Ende
 *G.06.20 - Ende
 **          ---> dafür aber PAN und Ablaufdatum
-             SET ERF-MANUELL TO TRUE
+*             SET ERF-MANUELL TO TRUE
+*G.07.02 - Ende
              MOVE IMSG-CF(IMSG-TPTR(02):IMSG-TLEN(02)) TO W-KANR
              MOVE IMSG-TLEN(02)                        TO W-KANR-LEN
              MOVE IMSG-CF(IMSG-TPTR(14):IMSG-TLEN(14)) TO W-ABL
@@ -2172,9 +2196,9 @@
      END-IF
 
 **  ---> BMP  2 - PAN
-*G.01.XX - Bei Chip ist es BMP 2 und 14 in Terminalanfrage
+*G.07.02 - Bei Chip ist es BMP 2 und 14 in Terminalanfrage
      IF  ERF-MANUELL OR ERF-CHIP
-*G.01.XX - Ende
+*G.07.02 - Ende
          MOVE 02         TO W207-XBMP
          MOVE W-KANR     TO W207-XCOBVAL
          MOVE W-KANR-LEN TO W207-XCOBLEN
@@ -2247,9 +2271,9 @@
      END-IF
 
 **  ---> BMP 14 - Verfalldatum
-*G.01.XX - Bei Chip ist es BMP 2 und 14 in Terminalanfrage
+*G.07.02 - Bei Chip ist es BMP 2 und 14 in Terminalanfrage
      IF  ERF-MANUELL OR ERF-CHIP
-*G.01.XX - Ende
+*G.07.02 - Ende
          MOVE 14 TO W207-XBMP
          MOVE 4  TO W207-XCOBLEN
          MOVE W-ABL TO W207-XCOBVAL
@@ -2719,12 +2743,19 @@
 ******************************************************************
  C500-LOGGING SECTION.
  C500-00.
+*G.07.02 - bei W-AC 81 kein Logging, derzeit nur fuer den Fall,
+*          dass Term/Trace erneut verwendet wurde
+     IF W-AC = 81 AND TXILOG70-NOK
+        EXIT SECTION
+     END-IF
+*G.07.02 - Ende
+ 
 **  ---> Führungstabelle =TXILOG70
      PERFORM G100-PUT-TXILOG70
 
 **  ---> Anfragenachricht für Tabelle =TXNLOG70 TS-Nachrichten
      PERFORM G110-PUT-TXNLOG70-TS
-
+            
 *G.02.01 - Anfang
 ***  ---> nun UMSWEAT bedienen
 *    PERFORM G130-PUT-UMSWEAT
@@ -2749,7 +2780,8 @@
     END-IF
 *G.06.03 - Ende
 
-     IF DUPLICATE-KEY-NO
+*G.07.02 - kein Update mehr bei bereits vorhandenen, Änderung G.03.00 rückgängig
+*     IF DUPLICATE-KEY-NO
 
       IF  W-AC = ZEROS
 **  ---> UMSWEAT Insert
@@ -2765,29 +2797,29 @@
         END-IF
 *kl20160906 - G.06.08 - Ende
       END-IF
-*G.03.00 - Anfang
-     ELSE
-       IF DUPLICATE-KEY-YES
-**--> Wenn der Offliner erneut gesendet wurde, dann bei ungültiger TX
-**--> den evtl. vorliegenden (vorherigen) Umsatz löschen.
-
-          PERFORM G132-PUT-UMSWEAT-SELECT
-          MOVE WUMS-UMSATZ TO UMSWEAT
-          IF ENDE
-          OR KZ-BEARB OF UMSWEAT = "E"
-* Umsatz "E" - erledigt, weiterverarbeiteter Umsatz (kann archiviert werden)
-* und darf nicht mehr verändert werden
-             EXIT SECTION
-          END-IF
-
-        IF W-AC NOT = ZEROS
-            PERFORM G135-PUT-UMSWEAT-DELETE
-        END-IF
-       END-IF
-*G.03.00 - Ende
-     END-IF
-*G.02.01 - Ende
-
+**G.03.00 - Anfang
+*     ELSE
+*       IF DUPLICATE-KEY-YES
+***--> Wenn der Offliner erneut gesendet wurde, dann bei ungültiger TX
+***--> den evtl. vorliegenden (vorherigen) Umsatz löschen.
+*
+*          PERFORM G132-PUT-UMSWEAT-SELECT
+*          MOVE WUMS-UMSATZ TO UMSWEAT
+*          IF ENDE
+*          OR KZ-BEARB OF UMSWEAT = "E"
+** Umsatz "E" - erledigt, weiterverarbeiteter Umsatz (kann archiviert werden)
+** und darf nicht mehr verändert werden
+*             EXIT SECTION
+*          END-IF
+*
+*        IF W-AC NOT = ZEROS
+*            PERFORM G135-PUT-UMSWEAT-DELETE
+*        END-IF
+*       END-IF
+**G.03.00 - Ende
+*     END-IF
+**G.02.01 - Ende
+*G.07.02 - Ende
      .
 
  C500-99.
@@ -3736,7 +3768,7 @@
 *---> Extrahieren CVM-Result
 
 *    Default "2" - online PIN  wenn kein  9F34 da ist
-     MOVE "2"   TO CVM-RESULT
+     MOVE "2"   TO CVM-RESULT OF TXILOG70
 *    Erstmal annehmen, dass 9F34 nicht vorhanden
      SET W400-NOTFOUND   TO TRUE
 
@@ -4514,42 +4546,44 @@
 *G.03.00 - Anfang
 ******************************************************************
 * Löschen Daten in UMSWEAT Buffer
+*G.07.02 - nicht mehr gebraucht, Änderung G.03.00 rückgängig
 ******************************************************************
- G132-PUT-UMSWEAT-SELECT SECTION.
- G132-00.
-     MOVE PNR       of TXILOG70  TO PNR       of UMSWEAT
-     MOVE TERMNR    of TXILOG70  TO TERMNR    of UMSWEAT
-     MOVE TRACENR   of TXILOG70  TO TRACENR   of UMSWEAT
-
-**  ---> Aufruf Modul IUMSw07 (Zugriff zum UMSIFSF-Server)
-     MOVE UMSWEAT    TO WUMS-UMSATZ
-     MOVE K-MODUL    TO WUMS-ABSENDER
-     SET WUMS-TAB-UW TO TRUE
-     SET WUMS-CMD-ST TO TRUE
-     PERFORM M180-CALL-IUMSW07
-     .
- G132-99.
-     EXIT.
-
-******************************************************************
-* Löschen Daten in UMSWEAT Buffer
-******************************************************************
- G135-PUT-UMSWEAT-DELETE SECTION.
- G135-00.
-     MOVE PNR       of TXILOG70  TO PNR       of UMSWEAT
-     MOVE TERMNR    of TXILOG70  TO TERMNR    of UMSWEAT
-     MOVE TRACENR   of TXILOG70  TO TRACENR   of UMSWEAT
-
-**  ---> Aufruf Modul IUMSw07 (Zugriff zum UMSIFSF-Server)
-     MOVE UMSWEAT    TO WUMS-UMSATZ
-     MOVE K-MODUL    TO WUMS-ABSENDER
-     SET WUMS-TAB-UW TO TRUE
-     SET WUMS-CMD-DT TO TRUE
-     PERFORM M180-CALL-IUMSW07
-     .
- G135-99.
-     EXIT.
-*G.03.00 - Ende
+* G132-PUT-UMSWEAT-SELECT SECTION.
+* G132-00.
+*     MOVE PNR       of TXILOG70  TO PNR       of UMSWEAT
+*     MOVE TERMNR    of TXILOG70  TO TERMNR    of UMSWEAT
+*     MOVE TRACENR   of TXILOG70  TO TRACENR   of UMSWEAT
+*
+***  ---> Aufruf Modul IUMSw07 (Zugriff zum UMSIFSF-Server)
+*     MOVE UMSWEAT    TO WUMS-UMSATZ
+*     MOVE K-MODUL    TO WUMS-ABSENDER
+*     SET WUMS-TAB-UW TO TRUE
+*     SET WUMS-CMD-ST TO TRUE
+*     PERFORM M180-CALL-IUMSW07
+*     .
+* G132-99.
+*     EXIT.
+*
+*******************************************************************
+** Löschen Daten in UMSWEAT Buffer
+*******************************************************************
+* G135-PUT-UMSWEAT-DELETE SECTION.
+* G135-00.
+*     MOVE PNR       of TXILOG70  TO PNR       of UMSWEAT
+*     MOVE TERMNR    of TXILOG70  TO TERMNR    of UMSWEAT
+*     MOVE TRACENR   of TXILOG70  TO TRACENR   of UMSWEAT
+*
+***  ---> Aufruf Modul IUMSw07 (Zugriff zum UMSIFSF-Server)
+*     MOVE UMSWEAT    TO WUMS-UMSATZ
+*     MOVE K-MODUL    TO WUMS-ABSENDER
+*     SET WUMS-TAB-UW TO TRUE
+*     SET WUMS-CMD-DT TO TRUE
+*     PERFORM M180-CALL-IUMSW07
+*     .
+* G135-99.
+*     EXIT.
+**G.03.00 - Ende
+*G.07.02 - Ende
 
 
 ******************************************************************
@@ -5565,19 +5599,19 @@
 ******************************************************************
  S180-INSERT-TXILOG70 SECTION.
  S180-00.
-
-*G.03.00 - Anfang
-
-     EXEC SQL
-          WHENEVER SQLERROR
-     END-EXEC
-
-     EXEC SQL
-          WHENEVER SQLWARNING
-     END-EXEC
-
-     MOVE ZEROS TO DUPLICATE-KEY
-*G.03.00 - Ende
+*G.07.02 - kein Update mehr bei bereits vorhandenen, Änderung G.03.00 rückgängig
+**G.03.00 - Anfang
+*
+*     EXEC SQL
+*          WHENEVER SQLERROR
+*     END-EXEC
+*
+*     EXEC SQL
+*          WHENEVER SQLWARNING
+*     END-EXEC
+*
+*     MOVE ZEROS TO DUPLICATE-KEY
+**G.03.00 - Ende
 
      EXEC SQL
          INSERT
@@ -5653,13 +5687,11 @@
      END-EXEC
      EVALUATE SQLCODE OF SQLCA
               WHEN ZERO   SET TXILOG70-OK  TO TRUE
-
 *G.03.00 - Anfang
-         WHEN -8227
-              MOVE 1 TO DUPLICATE-KEY
-              PERFORM S181-UPDATE-TXILOG70
+*         WHEN -8227
+*              MOVE 1 TO DUPLICATE-KEY
+*              PERFORM S181-UPDATE-TXILOG70
 *G.03.00 - Ende
-
          WHEN OTHER  SET TXILOG70-NOK TO TRUE
                      SET ENDE TO TRUE
                      MOVE 2005 TO ERROR-NR of GEN-ERROR
@@ -5674,14 +5706,15 @@
                      PERFORM Z002-PROGERR
      END-EVALUATE
 
-*G.03.00 - Anfang
-     EXEC SQL
-          WHENEVER SQLERROR       PERFORM :Z001-SQLERROR
-     END-EXEC
-     EXEC SQL
-          WHENEVER SQLWARNING     PERFORM :Z001-SQLERROR
-     END-EXEC
-*G.03.00 - Ende
+**G.03.00 - Anfang
+*     EXEC SQL
+*          WHENEVER SQLERROR       PERFORM :Z001-SQLERROR
+*     END-EXEC
+*     EXEC SQL
+*          WHENEVER SQLWARNING     PERFORM :Z001-SQLERROR
+*     END-EXEC
+**G.03.00 - Ende
+*G.07.02 - Ende
 
      .
  S180-99.
@@ -5690,109 +5723,153 @@
 *G.03.00 - Anfang
 ******************************************************************
 * Update auf Tabelle TXILOG70
+*G.07.02 - nicht mehr gebraucht
 ******************************************************************
- S181-UPDATE-TXILOG70 SECTION.
- S181-00.
-  EXEC SQL
-       UPDATE =TXILOG70
-          SET MDNR              = :MDNR              of TXILOG70,
-              TSNR              = :TSNR              of TXILOG70,
-              TRACENR_AS        = :TRACENR-AS        of TXILOG70,
-              TRACENR_S         = :TRACENR-S         of TXILOG70,
-              BATCHNR           = :BATCHNR           of TXILOG70,
-              KANR              = :KANR              of TXILOG70,
-              KZ_E2EE           = :KZ-E2EE           of TXILOG70,
-              KEYNAME           = :KEYNAME           of TXILOG70,
-              BETRAG            = :BETRAG            of TXILOG70,
-              BETRAG_AUTOR      = :BETRAG-AUTOR      of TXILOG70,
-              BETRAG_CASHBACK   = :BETRAG-CASHBACK   of TXILOG70,
-              BETRAG_ART        = :BETRAG-ART        of TXILOG70,
-              CARDID            = :CARDID            of TXILOG70,
-              ROUTKZ            = :ROUTKZ            of TXILOG70,
-              LTGIND            = :LTGIND            of TXILOG70,
-              ASID              = :ASID              of TXILOG70,
-              AC_AS             = :AC-AS             of TXILOG70,
-              AC_TERM           = :AC-TERM           of TXILOG70,
-              GENNR             = :GENNR             of TXILOG70,
-              WKZ               = :WKZ               of TXILOG70,
-              LOGPROT           = :LOGPROT           of TXILOG70,
-              KZ_BEARB          = :KZ-BEARB          of TXILOG70,
-              KZ_VERF           = :KZ-VERF           of TXILOG70,
-              KZ_UMSATZ         = :KZ-UMSATZ         of TXILOG70,
-              ABL_JJMM          = :ABL-JJMM          of TXILOG70,
-              ACQUIRER_ID       = :ACQUIRER-ID       of TXILOG70,
-              ERFASSUNGS_ART    = :ERFASSUNGS-ART    of TXILOG70,
-              KARTEN_ART        = :KARTEN-ART        of TXILOG70,
-              KARTENFOLGE       = :KARTENFOLGE       of TXILOG70,
-              POS_DATEN         = :POS-DATEN         of TXILOG70,
-              TRANS_ART         = :TRANS-ART         of TXILOG70,
-              TRANS_TYP         = :TRANS-TYP         of TXILOG70,
-              CVM_RESULT        = :CVM-RESULT        of TXILOG70,
-              BRANCHEN_KZ       = :BRANCHEN-KZ       of TXILOG70,
-              HAENDLERNAME      = :HAENDLERNAME      of TXILOG70,
-              PROJEKT_ABH_DATEN = :PROJEKT-ABH-DATEN of TXILOG70,
-              VUNR              = :VUNR              of TXILOG70,
-              ZP_VERKAUF        = :ZP-VERKAUF        of TXILOG70,
-              ZP_TIN            = :ZP-TIN            of TXILOG70
-                                   TYPE AS DATETIME YEAR TO FRACTION(2),
-              ZP_AOUT           = :ZP-AOUT           of TXILOG70
-                                   TYPE AS DATETIME YEAR TO FRACTION(2),
-              ZP_TOUT           = :ZP-TOUT           of TXILOG70
-                                   TYPE AS DATETIME YEAR TO FRACTION(2),
-              AA_BMP38          = :AA-BMP38          of TXILOG70,
-              AF_BMP07          = :AF-BMP07          of TXILOG70,
-              ARTIKEL           = :ARTIKEL           of TXILOG70,
-              EMV_DATEN         = :EMV-DATEN         of TXILOG70
+* S181-UPDATE-TXILOG70 SECTION.
+* S181-00.
+*  EXEC SQL
+*       UPDATE =TXILOG70
+*          SET MDNR              = :MDNR              of TXILOG70,
+*              TSNR              = :TSNR              of TXILOG70,
+*              TRACENR_AS        = :TRACENR-AS        of TXILOG70,
+*              TRACENR_S         = :TRACENR-S         of TXILOG70,
+*              BATCHNR           = :BATCHNR           of TXILOG70,
+*              KANR              = :KANR              of TXILOG70,
+*              KZ_E2EE           = :KZ-E2EE           of TXILOG70,
+*              KEYNAME           = :KEYNAME           of TXILOG70,
+*              BETRAG            = :BETRAG            of TXILOG70,
+*              BETRAG_AUTOR      = :BETRAG-AUTOR      of TXILOG70,
+*              BETRAG_CASHBACK   = :BETRAG-CASHBACK   of TXILOG70,
+*              BETRAG_ART        = :BETRAG-ART        of TXILOG70,
+*              CARDID            = :CARDID            of TXILOG70,
+*              ROUTKZ            = :ROUTKZ            of TXILOG70,
+*              LTGIND            = :LTGIND            of TXILOG70,
+*              ASID              = :ASID              of TXILOG70,
+*              AC_AS             = :AC-AS             of TXILOG70,
+*              AC_TERM           = :AC-TERM           of TXILOG70,
+*              GENNR             = :GENNR             of TXILOG70,
+*              WKZ               = :WKZ               of TXILOG70,
+*              LOGPROT           = :LOGPROT           of TXILOG70,
+*              KZ_BEARB          = :KZ-BEARB          of TXILOG70,
+*              KZ_VERF           = :KZ-VERF           of TXILOG70,
+*              KZ_UMSATZ         = :KZ-UMSATZ         of TXILOG70,
+*              ABL_JJMM          = :ABL-JJMM          of TXILOG70,
+*              ACQUIRER_ID       = :ACQUIRER-ID       of TXILOG70,
+*              ERFASSUNGS_ART    = :ERFASSUNGS-ART    of TXILOG70,
+*              KARTEN_ART        = :KARTEN-ART        of TXILOG70,
+*              KARTENFOLGE       = :KARTENFOLGE       of TXILOG70,
+*              POS_DATEN         = :POS-DATEN         of TXILOG70,
+*              TRANS_ART         = :TRANS-ART         of TXILOG70,
+*              TRANS_TYP         = :TRANS-TYP         of TXILOG70,
+*              CVM_RESULT        = :CVM-RESULT        of TXILOG70,
+*              BRANCHEN_KZ       = :BRANCHEN-KZ       of TXILOG70,
+*              HAENDLERNAME      = :HAENDLERNAME      of TXILOG70,
+*              PROJEKT_ABH_DATEN = :PROJEKT-ABH-DATEN of TXILOG70,
+*              VUNR              = :VUNR              of TXILOG70,
+*              ZP_VERKAUF        = :ZP-VERKAUF        of TXILOG70,
+*              ZP_TIN            = :ZP-TIN            of TXILOG70
+*                                   TYPE AS DATETIME YEAR TO FRACTION(2),
+*              ZP_AOUT           = :ZP-AOUT           of TXILOG70
+*                                   TYPE AS DATETIME YEAR TO FRACTION(2),
+*              ZP_TOUT           = :ZP-TOUT           of TXILOG70
+*                                   TYPE AS DATETIME YEAR TO FRACTION(2),
+*              AA_BMP38          = :AA-BMP38          of TXILOG70,
+*              AF_BMP07          = :AF-BMP07          of TXILOG70,
+*              ARTIKEL           = :ARTIKEL           of TXILOG70,
+*              EMV_DATEN         = :EMV-DATEN         of TXILOG70
+*
+*        WHERE PNR,
+*              TERMNR,
+*              TRACENR,
+*              ISONTYP
+*            = :PNR     of TXILOG70,
+*              :TERMNR  of TXILOG70,
+*              :TRACENR of TXILOG70,
+*              :ISONTYP of TXILOG70
+*    END-EXEC
+*
+*    EVALUATE SQLCODE OF SQLCA
+*        WHEN ZERO   SET TXILOG70-OK  TO TRUE
+*        WHEN OTHER  SET TXILOG70-NOK TO TRUE
+*                    SET ENDE TO TRUE
+*                    MOVE 2003 TO ERROR-NR of GEN-ERROR
+*                    STRING  "TXILOG70@"
+*                            PNR     of TXILOG70 "/"
+*                            TERMNR  of TXILOG70 "/"
+*                            TRACENR of TXILOG70 "/"
+*                            ISONTYP of TXILOG70
+*                    delimited by size
+*                      INTO DATEN-BUFFER1
+*                    END-STRING
+*                    PERFORM Z002-PROGERR
+*    END-EVALUATE
+*    .
+* S181-99.
+*     EXIT.
+**G.03.00 - Ende
 
-        WHERE PNR,
-              TERMNR,
-              TRACENR,
-              ISONTYP
-            = :PNR     of TXILOG70,
-              :TERMNR  of TXILOG70,
-              :TRACENR of TXILOG70,
-              :ISONTYP of TXILOG70
-    END-EXEC
 
-    EVALUATE SQLCODE OF SQLCA
-        WHEN ZERO   SET TXILOG70-OK  TO TRUE
-        WHEN OTHER  SET TXILOG70-NOK TO TRUE
-                    SET ENDE TO TRUE
-                    MOVE 2003 TO ERROR-NR of GEN-ERROR
-                    STRING  "TXILOG70@"
-                            PNR     of TXILOG70 "/"
-                            TERMNR  of TXILOG70 "/"
-                            TRACENR of TXILOG70 "/"
-                            ISONTYP of TXILOG70
-                    delimited by size
-                      INTO DATEN-BUFFER1
-                    END-STRING
-                    PERFORM Z002-PROGERR
-    END-EVALUATE
-    .
- S181-99.
+******************************************************************
+* Pruefen, ob Trx mit Term/Trace bereits in TXILOG70
+*G.07.02 - neu
+******************************************************************
+ S182-CHECK-TXILOG70 SECTION.
+ S182-00.
+     MOVE W-TERMNR (7:2) TO PNR     OF TXILOG70-CHK
+     MOVE W-TERMNR       TO TERMNR  OF TXILOG70-CHK
+     MOVE W-TRACENR      TO TRACENR OF TXILOG70-CHK
+     EXEC SQL
+         SELECT PNR,TERMNR,TRACENR
+           INTO  :PNR    OF TXILOG70-CHK
+                ,:TERMNR OF TXILOG70-CHK
+                ,:TRACENR OF TXILOG70-CHK
+           FROM  =TXILOG70
+           WHERE PNR,TERMNR,TRACENR =
+                 :PNR     OF TXILOG70-CHK
+                ,:TERMNR  OF TXILOG70-CHK
+                ,:TRACENR OF TXILOG70-CHK
+     END-EXEC
+     
+     EVALUATE SQLCODE OF SQLCA
+         WHEN ZERO   MOVE 81          TO W-AC
+                     SET TXILOG70-NOK TO TRUE
+         WHEN 100    CONTINUE
+         WHEN OTHER  SET TXILOG70-NOK TO TRUE
+                     SET ENDE TO TRUE
+                     MOVE 2005 TO ERROR-NR of GEN-ERROR
+                     STRING  "TXILOG70@"
+                             PNR     of TXILOG70-CHK "/"
+                             TERMNR  of TXILOG70-CHK "/"
+                             TRACENR of TXILOG70-CHK "/"
+                                 delimited by size
+                       INTO DATEN-BUFFER1
+                     END-STRING
+                     PERFORM Z002-PROGERR
+     END-EVALUATE
+     .
+ S182-99.
      EXIT.
-*G.03.00 - Ende
+
 
 ******************************************************************
 * Insert auf Tabelle TXNLOG70
 ******************************************************************
  S190-INSERT-TXNLOG70-TS SECTION.
  S190-00.
-
-*G.03.00 - Anfang
-
-     EXEC SQL
-          WHENEVER SQLERROR
-     END-EXEC
-
-     EXEC SQL
-          WHENEVER SQLWARNING
-     END-EXEC
-
-     MOVE ZEROS TO DUPLICATE-KEY
-
-*G.03.00 - Ende
+*G.07.02 - kein Update mehr bei bereits vorhandenen, Änderung G.03.00 rückgängig
+**G.03.00 - Anfang
+*
+*     EXEC SQL
+*          WHENEVER SQLERROR
+*     END-EXEC
+*
+*     EXEC SQL
+*          WHENEVER SQLWARNING
+*     END-EXEC
+*
+*     MOVE ZEROS TO DUPLICATE-KEY
+*
+**G.03.00 - Ende
 
      EXEC SQL
          INSERT
@@ -5818,11 +5895,11 @@
      EVALUATE SQLCODE OF SQLCA
          WHEN ZERO   SET TXNLOG70-OK  TO TRUE
 
-*G.03.00 - Anfang
-         WHEN -8227
-              MOVE 1 TO DUPLICATE-KEY
-              PERFORM S191-UPDATE-TXNLOG70-TS
-*G.03.00 - Ende
+**G.03.00 - Anfang
+*         WHEN -8227
+*              MOVE 1 TO DUPLICATE-KEY
+*              PERFORM S191-UPDATE-TXNLOG70-TS
+**G.03.00 - Ende
 
          WHEN OTHER  SET TXNLOG70-NOK TO TRUE
                      SET ENDE TO TRUE
@@ -5839,14 +5916,15 @@
                      PERFORM Z002-PROGERR
      END-EVALUATE
 
-*G.03.00 - Anfang
-     EXEC SQL
-          WHENEVER SQLERROR       PERFORM :Z001-SQLERROR
-     END-EXEC
-     EXEC SQL
-          WHENEVER SQLWARNING     PERFORM :Z001-SQLERROR
-     END-EXEC
-*G.03.00 - Ende
+**G.03.00 - Anfang
+*     EXEC SQL
+*          WHENEVER SQLERROR       PERFORM :Z001-SQLERROR
+*     END-EXEC
+*     EXEC SQL
+*          WHENEVER SQLWARNING     PERFORM :Z001-SQLERROR
+*     END-EXEC
+**G.03.00 - Ende
+*G.07.02 - Ende
 
      .
  S190-99.
@@ -5855,52 +5933,53 @@
 *G.03.00 - Anfang
 ******************************************************************
 * Insert auf Tabelle TXNLOG70
+*G.07.02 - nicht mehr gebraucht
 ******************************************************************
- S191-UPDATE-TXNLOG70-TS SECTION.
- S191-00.
-   EXEC SQL
-        UPDATE =TXNLOG70
-           SET ISO_VERF  = :ISO-VERF  of TXNLOG70-TS,
-               MDNR      = :MDNR      of TXNLOG70-TS,
-               TSNR      = :TSNR      of TXNLOG70-TS,
-               LOG_SRV   = :LOG-SRV   of TXNLOG70-TS,
-               FREHEADER = :FREHEADER of TXNLOG70-TS,
-               ANFRAGE   = :ANFRAGE   of TXNLOG70-TS,
-               ANTWORT   = :ANTWORT   of TXNLOG70-TS
-
-         WHERE PNR,
-               TERMNR,
-               TRACENR,
-               ISONTYP,
-               KZ_MSG
-             = :PNR     of TXNLOG70-TS,
-               :TERMNR  of TXNLOG70-TS,
-               :TRACENR of TXNLOG70-TS,
-               :ISONTYP of TXNLOG70-TS,
-               :KZ-MSG  of TXNLOG70-TS
-
-   END-EXEC
-
-   EVALUATE SQLCODE OF SQLCA
-       WHEN ZERO   SET TXNLOG70-OK  TO TRUE
-       WHEN OTHER  SET TXNLOG70-NOK TO TRUE
-                   SET ENDE TO TRUE
-                   MOVE 2003 TO ERROR-NR of GEN-ERROR
-                   STRING  "TXNLOG70@"
-                            PNR     of TXNLOG70-TS "/"
-                            TERMNR  of TXNLOG70-TS "/"
-                            TRACENR of TXNLOG70-TS "/"
-                            ISONTYP of TXNLOG70-TS "/"
-                            KZ-MSG  of TXNLOG70-TS
-                   delimited by size
-                   INTO     DATEN-BUFFER1
-                   END-STRING
-                   PERFORM Z002-PROGERR
-   END-EVALUATE
-     .
- S191-99.
-     EXIT.
-*G.03.00 - Ende
+* S191-UPDATE-TXNLOG70-TS SECTION.
+* S191-00.
+*   EXEC SQL
+*        UPDATE =TXNLOG70
+*           SET ISO_VERF  = :ISO-VERF  of TXNLOG70-TS,
+*               MDNR      = :MDNR      of TXNLOG70-TS,
+*               TSNR      = :TSNR      of TXNLOG70-TS,
+*               LOG_SRV   = :LOG-SRV   of TXNLOG70-TS,
+*               FREHEADER = :FREHEADER of TXNLOG70-TS,
+*               ANFRAGE   = :ANFRAGE   of TXNLOG70-TS,
+*               ANTWORT   = :ANTWORT   of TXNLOG70-TS
+*
+*         WHERE PNR,
+*               TERMNR,
+*               TRACENR,
+*               ISONTYP,
+*               KZ_MSG
+*             = :PNR     of TXNLOG70-TS,
+*               :TERMNR  of TXNLOG70-TS,
+*               :TRACENR of TXNLOG70-TS,
+*               :ISONTYP of TXNLOG70-TS,
+*               :KZ-MSG  of TXNLOG70-TS
+*
+*   END-EXEC
+*
+*   EVALUATE SQLCODE OF SQLCA
+*       WHEN ZERO   SET TXNLOG70-OK  TO TRUE
+*       WHEN OTHER  SET TXNLOG70-NOK TO TRUE
+*                   SET ENDE TO TRUE
+*                   MOVE 2003 TO ERROR-NR of GEN-ERROR
+*                   STRING  "TXNLOG70@"
+*                            PNR     of TXNLOG70-TS "/"
+*                            TERMNR  of TXNLOG70-TS "/"
+*                            TRACENR of TXNLOG70-TS "/"
+*                            ISONTYP of TXNLOG70-TS "/"
+*                            KZ-MSG  of TXNLOG70-TS
+*                   delimited by size
+*                   INTO     DATEN-BUFFER1
+*                   END-STRING
+*                   PERFORM Z002-PROGERR
+*   END-EVALUATE
+*     .
+* S191-99.
+*     EXIT.
+**G.03.00 - Ende
 
 ******************************************************************
 * Insert auf Tabelle ASYNC70

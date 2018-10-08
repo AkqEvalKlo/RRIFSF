@@ -76,6 +76,8 @@
 *-------|----------|-----|--------------------------------------------------*
 *G.07.02|2018-10-05| kus | DKVCHIP-23:
 *       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | RRIFSF-13:
+*       |          |     | - KM-Stand + Fahrzeugnummer an RR-AS
 *-------|----------|-----|-------------------------------------------*
 *G.07.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -1378,6 +1380,9 @@
          WHEN VERF-UT    SET AS-VERF-UT TO TRUE
          WHEN VERF-LO    SET AS-VERF-LO TO TRUE
          WHEN VERF-EU    SET AS-VERF-EU TO TRUE
+*G.07.02 - auch spezielles Verfahren fuer Roadrunner
+         WHEN VERF-RR    SET AS-VERF-RR TO TRUE
+*G.07.02 - Ende
 
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
 
@@ -3390,39 +3395,43 @@
  D325-00.
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
-
-**  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
-**  --->          noch Fahrerdaten, die einzustellen sind (48.8))
-**  --->          !!! bei Roadrunner allerdings nicht !!!
-**  ---> zunächst die BitMap erstellen
-     MOVE ALL ZEROES TO W-BYTEMAP-48
-     MOVE "1"        TO W-BYTEMAP-48(4:1)
-     MOVE "1"        TO W-BYTEMAP-48(14:1)
-     IF  GEODATA-YES
-         MOVE "1"    TO W-BYTEMAP-48(41:1)
-     END-IF
-     MOVE  LOW-VALUE TO W-BITMAP
-     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
-     MOVE 8        TO W-BUFFER-LEN
-     MOVE W-BITMAP TO W-BUFFER
-
-**  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
-     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
-     ADD 12 TO W-BUFFER-LEN
-
-     IF  GEODATA-YES
-         MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
-         ADD 20 TO W-BUFFER-LEN
-     END-IF
-
-**  +++> jetzt in die Nachricht einbauen
-     MOVE 48           TO W207-XBMP
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+     
+*G.07.02 - BMP 48-8 jetzt auch, Default Section kann verwendet werden
+     PERFORM E310-BMP48-DEFAULT
+     
+***  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
+***  --->          noch Fahrerdaten, die einzustellen sind (48.8))
+***  --->          !!! bei Roadrunner allerdings nicht !!!
+***  ---> zunächst die BitMap erstellen
+*     MOVE ALL ZEROES TO W-BYTEMAP-48
+*     MOVE "1"        TO W-BYTEMAP-48(4:1)
+*     MOVE "1"        TO W-BYTEMAP-48(14:1)
+*     IF  GEODATA-YES
+*         MOVE "1"    TO W-BYTEMAP-48(41:1)
+*     END-IF
+*     MOVE  LOW-VALUE TO W-BITMAP
+*     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+*     MOVE 8        TO W-BUFFER-LEN
+*     MOVE W-BITMAP TO W-BUFFER
+*
+***  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
+*     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
+*     ADD 12 TO W-BUFFER-LEN
+*
+*     IF  GEODATA-YES
+*         MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
+*         ADD 20 TO W-BUFFER-LEN
+*     END-IF
+*
+***  +++> jetzt in die Nachricht einbauen
+*     MOVE 48           TO W207-XBMP
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+*G.07.02 - Ende
      .
  D325-99.
      EXIT.

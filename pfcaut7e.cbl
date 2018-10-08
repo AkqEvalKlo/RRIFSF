@@ -74,6 +74,8 @@
 *-------|----------|-----|-------------------------------------------*
 *G.04.02|2018-10-05| kus | DKVCHIP-23:
 *       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | RRIFSF-13:
+*       |          |     | - KM-Stand + Fahrzeugnummer an RR-AS
 *-------|----------|-----|-------------------------------------------*
 *G.04.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -1429,9 +1431,9 @@
 *G.03.20 - jetzt spezielles Verfahren fuer TND
          WHEN VERF-TN    SET AS-VERF-TN TO TRUE
 *G.03.20 - Ende
-*G.01.XX - auch spezielles Verfahren fuer Roadrunner
+*G.04.02 - auch spezielles Verfahren fuer Roadrunner
          WHEN VERF-RR    SET AS-VERF-RR TO TRUE
-*G.01.XX - Ende
+*G.04.02 - Ende
          WHEN VERF-TO    SET AS-VERF-TO TO TRUE
          WHEN VERF-UT    SET AS-VERF-UT TO TRUE
 
@@ -3629,7 +3631,7 @@
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
 
-*G.01.XX - BMP 48-8 jetzt auch, Default kann verwendet werden
+*G.04.02 - BMP 48-8 jetzt auch, Default kann verwendet werden
      PERFORM E310-BMP48-DEFAULT
      
      
@@ -3665,7 +3667,7 @@
 *     IF  ENDE
 *         EXIT SECTION
 *     END-IF
-*G.01.XX - Ende
+*G.04.02 - Ende
      .
  D325-99.
      EXIT.
