@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2018-09-11
-* Letzte Version   :: G.03.01
+* Letzte Aenderung :: 2018-10-05
+* Letzte Version   :: G.03.02
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -68,6 +68,9 @@
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
+*G.03.02|2018-10-05| kus | DKVCHIP-23:
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*-------|----------|-----|-------------------------------------------*
 *G.03.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
 *-------|----------|-----|-------------------------------------------*
@@ -3947,7 +3950,9 @@
 
 *kl20180316 - G.02.40 - Unterscheidung zwischen Chip und Spur2
 *     MOVE 221            TO KARTEN-ART     of TXILOG70
-     IF W-ERF-CHIP
+*G.03.02 - Chip Kontaktlos auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.03.02 - Ende
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
         MOVE   "r"       TO KZ-VERF        of TXILOG70

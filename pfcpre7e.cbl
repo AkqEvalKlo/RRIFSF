@@ -58,8 +58,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-09-11
-* Letzte Version   :: G.07.01
+* Letzte Aenderung :: 2018-10-05
+* Letzte Version   :: G.07.02
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protok.
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -74,6 +74,9 @@
 *---------------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                        *
 *-------|----------|-----|--------------------------------------------------*
+*G.07.02|2018-10-05| kus | DKVCHIP-23:
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*-------|----------|-----|-------------------------------------------*
 *G.07.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
 *-------|----------|-----|-------------------------------------------*
@@ -3528,7 +3531,9 @@
  D950-00.
 
 *    Pruefen BMP 22 auf Gueltigkeit (Pos 7 = 05 = ICC)
-     IF W-ERF-CHIP
+*G.07.02 - Kontaktlos Chip auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.07.02 - Ende
         IF IMSG-TBMP(14) = 1
            CONTINUE
         ELSE
@@ -4245,7 +4250,9 @@
 
 *kl20180316 - G.06.50 - Unterscheidung zwischen Chip und Spur2
 *     MOVE 221            TO KARTEN-ART     of TXILOG70
-     IF W-ERF-CHIP
+*G.07.02 - Chip Kontaktlos auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.07.02 - Ende
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
         MOVE   "r"       TO KZ-VERF        of TXILOG70

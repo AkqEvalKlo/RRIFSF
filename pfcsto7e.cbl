@@ -45,8 +45,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2018-09-27
-* Letzte Version   :: G.02.02
+* Letzte Aenderung :: 2018-10-05
+* Letzte Version   :: G.02.03
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -61,6 +61,9 @@
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
+*G.02.03|2018-10-05| kus | DKVCHIP-23:
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*-------|----------|-----|-------------------------------------------*
 *G.02.02|2018-09-27| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
 *-------|----------|-----|-------------------------------------------*
@@ -2199,7 +2202,9 @@
 
 *G.00.33 - Chipdaten in AS Anfrage
 **  ---> BMP 55 - wenn Chiperfassung
-     IF W-ERF-CHIP
+*G.02.03 - Chip Kontaktlos auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.02.03 - Ende
         MOVE 55          TO W207-XBMP
         MOVE W-BMP55-LEN TO W207-XCOBLEN
         MOVE W-BMP55     TO W207-XCOBVAL
@@ -3730,7 +3735,8 @@
 *G.01.12 - neue KZ-VERF fuer Chip
 *G.00.16 - Anfang - Sonst fuktioniert =UMSWEAT bei man. Storno nicht
      IF OFFLINE-BUCHUNG  OF BUCHUNGS-FLAG
-        IF W-ERF-CHIP
+*G.02.03 - Chip Kontaktlos auch beachten
+        IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
             MOVE "q"         TO KZ-VERF        OF TXILOG70
         ELSE
 *G.02.01 - jetzt wirklich "m" und nicht mehr "k"
@@ -3738,7 +3744,8 @@
 *G.02.01 - Ende
         END-IF
      ELSE
-        IF W-ERF-CHIP
+        IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.02.03 - Ende
             MOVE "r"         TO KZ-VERF        OF TXILOG70
         ELSE
             MOVE "f"         TO KZ-VERF        OF TXILOG70
@@ -3756,7 +3763,8 @@
      MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    OF TXILOG70
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART OF TXILOG70
 *G.00.33 - Wenn Chip Erfassung -> EMV Daten loggen und Trans-Art aendern
-     IF W-ERF-CHIP
+*G.02.03 - Chip Kontaktlos auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
         MOVE W-BMP55-LEN TO LEN OF EMV-DATEN OF TXILOG70
         MOVE W-BMP55     TO VAL OF EMV-DATEN OF TXILOG70
      END-IF
@@ -3764,7 +3772,7 @@
 
 *kl20180316 - G.01.05 - Unterscheidung zwischen Chip und Spur2
 *     MOVE 221            TO KARTEN-ART     of TXILOG70
-     IF W-ERF-CHIP
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
      ELSE
@@ -3781,6 +3789,7 @@
             WHEN 01 MOVE "MO"       TO TRANS-ART      of TXILOG70
             WHEN 02 MOVE "2O"       TO TRANS-ART      of TXILOG70
             WHEN 05 MOVE "IC"       TO TRANS-ART      of TXILOG70
+            WHEN 07 MOVE "IC"       TO TRANS-ART      of TXILOG70
             WHEN OTHER CONTINUE
          END-EVALUATE
      ELSE
@@ -3788,9 +3797,11 @@
             WHEN 01 MOVE "ME"       TO TRANS-ART      of TXILOG70
             WHEN 02 MOVE "2E"       TO TRANS-ART      of TXILOG70
             WHEN 05 MOVE "OC"       TO TRANS-ART      of TXILOG70
+            WHEN 07 MOVE "OC"       TO TRANS-ART      of TXILOG70
             WHEN OTHER CONTINUE
          END-EVALUATE
      END-IF
+*G.02.03 - Ende
 *G.00.33 - Ende
 
      MOVE SPACES         TO TRANS-TYP      OF TXILOG70

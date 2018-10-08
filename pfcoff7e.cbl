@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-09-11
-* Letzte Version   :: G.07.01
+* Letzte Aenderung :: 2018-10-05
+* Letzte Version   :: G.07.02
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -66,6 +66,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.07.02|2018-10-05| kus | DKVCHIP-23:
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
 *-------|----------|-----|-------------------------------------------*
 *G.07.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -1986,15 +1989,22 @@
 **      ---> KEINE Spur 2 vorhanden
          IF  IMSG-TBMP(02) = 1 and IMSG-TBMP(14) = 1
 *G.06.20 - Fehler, wenn BMP 55 bei Handeingabe
+*G.01.XX -
              IF IMSG-TBMP(55) = 1
-                 SET ERF-ERROR TO TRUE
-                 MOVE 30  TO W-AC
-                 MOVE 2201 TO ERROR-NR of GEN-ERROR
-                 MOVE "Kombination aus:@" TO DATEN-BUFFER1
-                 MOVE "BMP 2, 14 und BMP 55 nicht korrekt@" TO DATEN-BUFFER2
-                 PERFORM Z002-PROGERR
-                 EXIT SECTION
+**          ---> dafür aber PAN und Ablaufdatum
+                 SET ERF-CHIP TO TRUE
+                 MOVE IMSG-CF(IMSG-TPTR(02):IMSG-TLEN(02)) TO W-KANR
+                 MOVE IMSG-TLEN(02)                        TO W-KANR-LEN
+                 MOVE IMSG-CF(IMSG-TPTR(14):IMSG-TLEN(14)) TO W-ABL
+*                 SET ERF-ERROR TO TRUE
+*                 MOVE 30  TO W-AC
+*                 MOVE 2201 TO ERROR-NR of GEN-ERROR
+*                 MOVE "Kombination aus:@" TO DATEN-BUFFER1
+*                 MOVE "BMP 2, 14 und BMP 55 nicht korrekt@" TO DATEN-BUFFER2
+*                 PERFORM Z002-PROGERR
+*                 EXIT SECTION
              END-IF
+*G.01.XX - Ende
 *G.06.20 - Ende
 **          ---> dafür aber PAN und Ablaufdatum
              SET ERF-MANUELL TO TRUE
@@ -2162,7 +2172,9 @@
      END-IF
 
 **  ---> BMP  2 - PAN
-     IF  ERF-MANUELL
+*G.01.XX - Bei Chip ist es BMP 2 und 14 in Terminalanfrage
+     IF  ERF-MANUELL OR ERF-CHIP
+*G.01.XX - Ende
          MOVE 02         TO W207-XBMP
          MOVE W-KANR     TO W207-XCOBVAL
          MOVE W-KANR-LEN TO W207-XCOBLEN
@@ -2235,7 +2247,9 @@
      END-IF
 
 **  ---> BMP 14 - Verfalldatum
-     IF  ERF-MANUELL
+*G.01.XX - Bei Chip ist es BMP 2 und 14 in Terminalanfrage
+     IF  ERF-MANUELL OR ERF-CHIP
+*G.01.XX - Ende
          MOVE 14 TO W207-XBMP
          MOVE 4  TO W207-XCOBLEN
          MOVE W-ABL TO W207-XCOBVAL
@@ -2332,7 +2346,8 @@
 
 **  ---> BMP 35 - Spur 2
 *G.06.20 - Bei Erfassung Chip auch Spur 2 Daten
-     IF  ERF-SPUR2 OR ERF-CHIP
+     IF  ERF-SPUR2
+*  OR ERF-CHIP
 *G.06.20 - Ende
          MOVE 35            TO W207-XBMP
          MOVE W207-TLEN(35) TO W207-XCOBLEN
@@ -3693,7 +3708,9 @@
  D950-00.
 
 *    Pruefen BMP 22 auf Gueltigkeit (Pos 7 = 05 = ICC)
-     IF W-ERF-CHIP
+*G.07.02 - Kontaktlos Chip auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.07.02 - Ende
         CONTINUE
      ELSE
         INITIALIZE GEN-ERROR
@@ -4352,7 +4369,9 @@
 
 *kl20180316 - G.06.33 - Unterscheidung zwischen Chip und Spur2
 *     MOVE 221            TO KARTEN-ART     of TXILOG70
-     IF W-ERF-CHIP
+*G.07.02 - Kontaktlos Chip auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.07.02 - Ende
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
         MOVE "q"         TO KZ-VERF        of TXILOG70
