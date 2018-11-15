@@ -72,6 +72,7 @@
 *       |          |     | DKVCHIP-24:
 *       |          |     | - Bei Offlinern mit Chip Erfassung 
 *       |          |     |   BMP 2 und 14 in TS-Anfrage
+*       |          |     | - G.03.03 zurück genommen
 *       |          |     | R7-409:
 *       |          |     | - bei nicht gekennzeichneten Wiederholern
 *       |          |     |   kein insert/update mehr
@@ -2002,14 +2003,23 @@
              PERFORM Z002-PROGERR
              EXIT SECTION
          END-IF
-
+         
+*G.07.02 - Chip hat kein BMP 55
 *G.06.20 - Pruefung, ob Chipdaten, bei BMP35
          IF IMSG-TBMP(55) = 1
-            SET ERF-CHIP TO TRUE
-            MOVE IMSG-TLEN(55) TO W-BMP55-LEN
-            MOVE IMSG-CF(IMSG-TPTR(55):IMSG-TLEN(55)) TO W-BMP55
+*            SET ERF-CHIP TO TRUE
+*            MOVE IMSG-TLEN(55) TO W-BMP55-LEN
+*            MOVE IMSG-CF(IMSG-TPTR(55):IMSG-TLEN(55)) TO W-BMP55
+            SET ERF-ERROR TO TRUE
+            MOVE 30  TO W-AC
+            MOVE 2201 TO ERROR-NR of GEN-ERROR
+            MOVE "Kombination aus:@" TO DATEN-BUFFER1
+            MOVE "BMP 35 und BMP 55 nicht korrekt@" TO DATEN-BUFFER2
+            PERFORM Z002-PROGERR
+            EXIT SECTION
          END-IF
 *G.06.20 - Ende
+*G.07.02 - Ende
      ELSE
 **      ---> KEINE Spur 2 vorhanden
          IF  IMSG-TBMP(02) = 1 and IMSG-TBMP(14) = 1
@@ -2018,6 +2028,8 @@
              IF IMSG-TBMP(55) = 1
 **          ---> dafür aber PAN und Ablaufdatum
                  SET ERF-CHIP TO TRUE
+                 MOVE IMSG-TLEN(55) TO W-BMP55-LEN
+                 MOVE IMSG-CF(IMSG-TPTR(55):IMSG-TLEN(55)) TO W-BMP55
 *                 SET ERF-ERROR TO TRUE
 *                 MOVE 30  TO W-AC
 *                 MOVE 2201 TO ERROR-NR of GEN-ERROR
@@ -3808,82 +3820,84 @@
 *G.03.03 - Ende
 
      END-EVALUATE
-
+     
+*G.07.02 - Prüfung nicht notwendig
 *G.03.03 - Anfang
-*    Prüfung auf TAG 5F34 (Kartenfolgenummer)
-*    Erstmal annehmen, dass 5F34 nicht vorhanden
-
-
-     SET W400-NOTFOUND TO TRUE
-
-*Versuch, 5F34 ueber WISO400 zu holen
-     SET W400-LOOK4TAGXP TO TRUE
-     MOVE VAL OF EMV-DATEN OF TXILOG70 TO W400-BER-TLV-STRING
-     MOVE LEN OF EMV-DATEN OF TXILOG70 TO W400-BER-TLV-LEN
-     MOVE "5F34"                       TO W400-SEARCH-TAG
-
-     CALL "WISO400" USING W400-WISO400C
+**    Prüfung auf TAG 5F34 (Kartenfolgenummer)
+**    Erstmal annehmen, dass 5F34 nicht vorhanden
 *
-     EVALUATE TRUE
-
-      WHEN W400-OK
-
-           IF  IMSG-TBMP(23) = 1
-           AND IMSG-TPTR(23) > ZEROS
-           AND IMSG-TLEN(23) > ZEROS
-               CONTINUE
-           ELSE
-               INITIALIZE GEN-ERROR
-               STRING "TAG 5F34 in BMP55, BMP23 fehlt in der Anfrage",
-               DELIMITED BY SIZE INTO DATEN-BUFFER1
-               STRING "Bei TERMNR: ",
-                       W-TERMNR,
-                      " / TRACENR ",
-                       W-TRACENR
-               DELIMITED BY SIZE INTO DATEN-BUFFER2
-               PERFORM Z002-PROGERR
-               MOVE 30 TO W-AC
-               EXIT SECTION
-           END-IF
-
-      WHEN W400-NOTFOUND
-
-           IF  IMSG-TBMP(23) = 1
-           AND IMSG-TPTR(23) > ZEROS
-           AND IMSG-TLEN(23) > ZEROS
-               INITIALIZE GEN-ERROR
-               STRING "BMP23 in Anfrage, aber TAG 5F34 fehlt in BMP55",
-               DELIMITED BY SIZE INTO DATEN-BUFFER1
-               STRING "Bei TERMNR: ",
-                       W-TERMNR,
-                      " / TRACENR ",
-                       W-TRACENR
-               DELIMITED BY SIZE INTO DATEN-BUFFER2
-               PERFORM Z002-PROGERR
-               MOVE 30 TO W-AC
-               EXIT SECTION
-           END-IF
-
-      WHEN OTHER
-           INITIALIZE GEN-ERROR
-           MOVE W400-RCODE TO D-NUM4
-           MOVE 2201 TO ERROR-NR OF GEN-ERROR
-           STRING "BMP55-Err (LOOK4TAGXP): "
-                   D-NUM4
-                  "@"
-           DELIMITED BY SIZE INTO DATEN-BUFFER1
-
-           STRING  "Term-Nr./Trace-Nr.: "
-                    W-TERMNR
-                   "/"
-                    W-TRACENR
-           DELIMITED BY SIZE INTO  DATEN-BUFFER2
-           PERFORM Z002-PROGERR
-           MOVE 30 TO W-AC
-           EXIT SECTION
-
-      END-EVALUATE
-*G.03.03 - Ende
+*
+*     SET W400-NOTFOUND TO TRUE
+*
+**Versuch, 5F34 ueber WISO400 zu holen
+*     SET W400-LOOK4TAGXP TO TRUE
+*     MOVE VAL OF EMV-DATEN OF TXILOG70 TO W400-BER-TLV-STRING
+*     MOVE LEN OF EMV-DATEN OF TXILOG70 TO W400-BER-TLV-LEN
+*     MOVE "5F34"                       TO W400-SEARCH-TAG
+*
+*     CALL "WISO400" USING W400-WISO400C
+**
+*     EVALUATE TRUE
+*
+*      WHEN W400-OK
+*
+*           IF  IMSG-TBMP(23) = 1
+*           AND IMSG-TPTR(23) > ZEROS
+*           AND IMSG-TLEN(23) > ZEROS
+*               CONTINUE
+*           ELSE
+*               INITIALIZE GEN-ERROR
+*               STRING "TAG 5F34 in BMP55, BMP23 fehlt in der Anfrage",
+*               DELIMITED BY SIZE INTO DATEN-BUFFER1
+*               STRING "Bei TERMNR: ",
+*                       W-TERMNR,
+*                      " / TRACENR ",
+*                       W-TRACENR
+*               DELIMITED BY SIZE INTO DATEN-BUFFER2
+*               PERFORM Z002-PROGERR
+*               MOVE 30 TO W-AC
+*               EXIT SECTION
+*           END-IF
+*
+*      WHEN W400-NOTFOUND
+*
+*           IF  IMSG-TBMP(23) = 1
+*           AND IMSG-TPTR(23) > ZEROS
+*           AND IMSG-TLEN(23) > ZEROS
+*               INITIALIZE GEN-ERROR
+*               STRING "BMP23 in Anfrage, aber TAG 5F34 fehlt in BMP55",
+*               DELIMITED BY SIZE INTO DATEN-BUFFER1
+*               STRING "Bei TERMNR: ",
+*                       W-TERMNR,
+*                      " / TRACENR ",
+*                       W-TRACENR
+*               DELIMITED BY SIZE INTO DATEN-BUFFER2
+*               PERFORM Z002-PROGERR
+*               MOVE 30 TO W-AC
+*               EXIT SECTION
+*           END-IF
+*
+*      WHEN OTHER
+*           INITIALIZE GEN-ERROR
+*           MOVE W400-RCODE TO D-NUM4
+*           MOVE 2201 TO ERROR-NR OF GEN-ERROR
+*           STRING "BMP55-Err (LOOK4TAGXP): "
+*                   D-NUM4
+*                  "@"
+*           DELIMITED BY SIZE INTO DATEN-BUFFER1
+*
+*           STRING  "Term-Nr./Trace-Nr.: "
+*                    W-TERMNR
+*                   "/"
+*                    W-TRACENR
+*           DELIMITED BY SIZE INTO  DATEN-BUFFER2
+*           PERFORM Z002-PROGERR
+*           MOVE 30 TO W-AC
+*           EXIT SECTION
+*
+*      END-EVALUATE
+**G.03.03 - Ende
+*G.07.02 - Ende
      .
 
  D950-99.
@@ -5833,6 +5847,9 @@
      EVALUATE SQLCODE OF SQLCA
          WHEN ZERO   MOVE 81          TO W-AC
                      SET TXILOG70-NOK TO TRUE
+                     MOVE "nicht gekennzeichnete Offl. Wiederholung - AC 81"
+                                      TO DATEN-BUFFER1
+                     PERFORM Z002-PROGERR
          WHEN 100    CONTINUE
          WHEN OTHER  SET TXILOG70-NOK TO TRUE
                      SET ENDE TO TRUE

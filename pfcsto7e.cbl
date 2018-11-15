@@ -3585,7 +3585,10 @@
       MOVE W-TERMNR (7:2)  TO        PNR        OF ASYNC70
       MOVE W-TERMNR        TO        TERMNR     OF ASYNC70
       MOVE W-TRACENR       TO        TRACENR    OF ASYNC70
-      MOVE 400             TO        ISONTYP    OF ASYNC70
+*G.01.XX - auch Wdh. NTYPE reinmoven
+*      MOVE 400             TO        ISONTYP    OF ASYNC70
+      MOVE W-NTYPE         TO        ISONTYP    OF ASYNC70
+*G.01.XX - Ende
       MOVE W-MDNR          TO        MDNR       OF ASYNC70
       MOVE W-TSNR          TO        TSNR       OF ASYNC70
       MOVE "FK"            TO        VKZ        OF ASYNC70
