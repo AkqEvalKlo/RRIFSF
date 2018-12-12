@@ -45,13 +45,8 @@
 
 
 ****************************************************************
-<<<<<<< HEAD
-* Letzte Aenderung :: 2018-09-26
-* Letzte Version   :: G.02.01
-=======
 * Letzte Aenderung :: 2018-10-05
 * Letzte Version   :: G.02.03
->>>>>>> DKVCHIP-25_R7-419_DKVCHIP-26
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -59,26 +54,19 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1420 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-<<<<<<< HEAD
-* Auftrag          :: R7-404
-=======
 * Auftrag          :: R7-376
->>>>>>> DKVCHIP-25_R7-419_DKVCHIP-26
 *
 * Aenderungen:
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
-<<<<<<< HEAD
-=======
 *G.02.03|2018-10-05| kus | DKVCHIP-23:
 *       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
 *-------|----------|-----|-------------------------------------------*
 *G.02.02|2018-09-27| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
 *-------|----------|-----|-------------------------------------------*
->>>>>>> DKVCHIP-25_R7-419_DKVCHIP-26
 *G.02.01|2018-09-26| kus | R7-404:
 *       |          |     | - KZ-VERF fuer Offl. not Chip "m"
 *-------|----------|-----|---------------------------------------*
