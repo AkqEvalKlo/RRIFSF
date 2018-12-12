@@ -44,8 +44,8 @@
 
 
 *******************************************************************************
-* Letzte Aenderung :: 2018-05-30
-* Letzte Version   :: G.02.100
+* Letzte Aenderung :: 2018-11-19
+* Letzte Version   :: G.03.02
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -53,14 +53,20 @@
 * Kurzbeschreibung :: auf Termial-Nachrichten vom Typ 210 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: RRIFSF-2
+* Auftrag          :: R7-376
 *
 * Aenderungen
 *
-*------------------------------------------------------------------------------*
-* Vers. | Datum    | von | Kommentar                                          *
+*--------------------------------------------------------------------*
+* Vers. | Datum    | von | Kommentar                                 *
 *-------|----------|-----|-------------------------------------------*
-*G.02.100|2018-05-30| kl  | RRIFSF-2:
+*G.03.02|2018-11-19| kus | DKVCHIP-25:
+*       |          |     | - BMP 55 ggf. vom AS an TS weiterleiten
+*-------|----------|-----|-------------------------------------------*
+*G.03.01|2018-09-11| kus | R7-376:
+*       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
+*-------|----------|-----|-------------------------------------------*
+*G.02.10|2018-05-30| kl  | RRIFSF-2:
 *       |          |     | - Neues FK-AS: Road Runner (RK=25)
 *       |          |     |   (Vereinbarung: Identisch WEAT AS 2)
 *-------|----------|-----|-------------------------------------------*
@@ -758,9 +764,10 @@
      05      S2-LFDNR             PIC S9(04) COMP VALUE ZEROS.
 *kl20180404 - G.02.10 - Ende
 
+*G.03.01 - Tabelle auf 150 vergroessert
 **          ---> AS-Keytabelle
  01          TK-KEYNAMEN.
-     05      TK-KEYNAMEN-TABELLE occurs 10.
+     05      TK-KEYNAMEN-TABELLE occurs 150.
       10     TK-ROUTKZ           PIC S9(04).
       10     TK-CARDID           PIC S9(04).
       10     TK-KEYNAME          PIC X(08).
@@ -769,7 +776,8 @@
       10     TK-HEXKEY           PIC X(04).
 
  01          TK-MAX              PIC S9(04) COMP.
- 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 10.
+ 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 150.
+*G.03.01 - Ende
 
 **          ---> Mapping-Tabelle für 3-stellige/2-stellige AC's
  01          TAC-MAP-TABELLE.
@@ -780,7 +788,9 @@
 **          ---> Mapping ROUTKZ <-> APPL_KZ.IFSFAC
 **          --->
 **          ---> hier muss ggf. bei weiteren AS'sen erweitert werden
- 01          VERF-ROUTKZ         PIC 9(02).
+*G.03.01 - Refactoring fuer AS-Verfahren
+ 01          VERF-AS            PIC 9(02) VALUE ZEROS.
+*G.03.01 - Ende
           88 VERF-AG                         VALUE 15.
           88 VERF-AV                         VALUE 05.
           88 VERF-BP                         VALUE 14.
@@ -1054,8 +1064,10 @@
      DECLARE KEYNAMEN_CURS CURSOR FOR
          SELECT   ROUTKZ, CARDID, KEYNAME, ISOGEN, ISOVERS
            FROM  =KEYNAMEN
-          WHERE   ROUTKZ = :ROUTKZ of KEYNAMEN
-         ORDER  BY CARDID
+*G.03.01 - alle laden
+*          WHERE   ROUTKZ = :ROUTKZ of KEYNAMEN
+         ORDER  BY ROUTKZ, CARDID
+*G.03.01 - Ende
          BROWSE  ACCESS
  END-EXEC
 
@@ -1161,19 +1173,30 @@
 **  ---> Initialisierung Felder
      PERFORM C000-INIT
 
-**  ---> holen Parameter AS-ROUTKZ
-     MOVE "AS-ROUTKZ" TO STUP-PORTION
+*G.03.01 - neuen Parameter AS-VERF laden und nicht mehr AS-ROUTKZ
+***  ---> holen Parameter AS-ROUTKZ
+*     MOVE "AS-ROUTKZ" TO STUP-PORTION
+*     PERFORM P950-GETPARAMTEXT
+*     IF  PRG-ABBRUCH
+*         EXIT SECTION
+*     END-IF
+     
+**  ---> holen Parameter AS-VERF
+     MOVE "AS-VERF" TO STUP-PORTION
      PERFORM P950-GETPARAMTEXT
      IF  PRG-ABBRUCH
          EXIT SECTION
      END-IF
 
+
 **  ---> holen Parameter für zuständiges AS
-     MOVE STUP-TEXT (1:STUP-RESULT) TO ROUTKZ of FCPARAM
-                                       W-ROUTKZ
+     MOVE STUP-TEXT (1:STUP-RESULT) TO VERF-AS
+                                       ROUTKZ of FCPARAM
+*                                       W-ROUTKZ
                                        S-ROUTKZ
-**                                    ---> für AC-Mapping-Tabelle
-                                       VERF-ROUTKZ
+***                                    ---> für Artikelmapper
+*                                       VERF-ROUTKZ     
+*G.03.01 - Ende        
 
 **  ---> Anwendung setzen für MAC-Berechnung
      EVALUATE TRUE
@@ -1252,7 +1275,7 @@
      IF  C9-COUNT > T-TAB-MAX
 *kl20180105 - G.02.05 - Ende
          MOVE "Programm interne Tabelle zu klein" TO  DATEN-BUFFER1
-         MOVE "mehr als 200 Einträge in =FCPARAM " TO  DATEN-BUFFER2
+         MOVE "mehr als 500 Einträge in =FCPARAM " TO  DATEN-BUFFER2
          MOVE ROUTKZ OF FCPARAM TO D-NUM4
          STRING  "für ROUTKZ = "     delimited by size
                  D-NUM4              delimited by size
@@ -1263,12 +1286,13 @@
          EXIT SECTION
      END-IF
 
+*G.03.01 - zusätzlich AIID mit in diese Tabelle laden + alle Eintraege aus KEYNAMEN
 **  ---> AS Schlüssel MACKEYA und PACKEYA aus Tabelle =KEYNAMEN einlesen
 **  ---> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 **  ---> !!!! zunächstmal wird nur der erste eingelesen !!!!
 **  ---> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 **  ---> ersten Eintrag holen
-     MOVE W-ROUTKZ TO ROUTKZ of KEYNAMEN
+*     MOVE W-ROUTKZ TO ROUTKZ of KEYNAMEN
      PERFORM S930-OPEN-KEYNAMEN-CURSOR
      PERFORM S940-FETCH-KEYNAMEN-CURSOR
 
@@ -1277,7 +1301,7 @@
              UNTIL   KEYNAMEN-EOD
              or      KEYNAMEN-NOK
              or      C9-COUNT > TK-TAB-MAX
-             or      C4-I1 > 1
+*             or      C4-I1 > 1
 
          MOVE ROUTKZ  of KEYNAMEN TO TK-ROUTKZ  (C4-I1)
          MOVE CARDID  of KEYNAMEN TO TK-CARDID  (C4-I1)
@@ -1297,10 +1321,11 @@
 **  ---> schliessen Cursor
      PERFORM S950-CLOSE-KEYNAMEN-CURSOR
      MOVE C9-COUNT TO TK-MAX
-*     IF  TK-MAX = 1
+     IF  TK-MAX = 1
          MOVE TK-HEXKEY (1) TO W-MACKEYA
          MOVE TK-HEXKEY (1) TO W-PACKEYA (1:4)
-*     END-IF
+     END-IF
+*G.03.01 - Ende
 
 **  ---> bestimmen Verfahren für AC-Mapping
      EVALUATE TRUE
@@ -1650,6 +1675,10 @@
      MOVE MDNR      of TXILOG70    TO W-MDNR
      MOVE TSNR      of TXILOG70    TO W-TSNR
      MOVE CARDID    of TXILOG70    TO W-CARDID
+     
+*G.03.01 - ROUTKZ aus TXILOG70
+     MOVE ROUTKZ    of TXILOG70    TO W-ROUTKZ   
+*G.03.01 - Ende
 
 *    Terminal-Nr. bereitstellen ...
      MOVE TERMNR    of TXILOG70    TO W-TERMNR,
@@ -2180,7 +2209,11 @@
 
       IF  IMSG-TBMP(64) = 1
 *G.01.04 - Anfang
-        EVALUATE W-ROUTKZ
+*G.03.01 - AS-VERF hier verwenden und Key bestimmen
+         PERFORM D200-FIX-KEY
+*        EVALUATE W-ROUTKZ
+         EVALUATE VERF-AS
+*G.03.01 - Ende
             WHEN 22
                  PERFORM F915-ASMAC-DUKPT
          WHEN OTHER
@@ -2335,6 +2368,19 @@
              EXIT SECTION
          END-IF
      END-IF
+     
+*G.03.02 - Chipdaten vom AS? Dann ans Terminal 
+**  ---> BMP 55 - Chipdaten ggf. übernehmen
+     IF  IMSG-TBMP(55) = 1
+         MOVE 55            TO W207-XBMP
+         MOVE IMSG-TLEN(55) TO W207-XCOBLEN
+         MOVE IMSG-CF(IMSG-TPTR(55):IMSG-TLEN(55)) TO W207-XCOBVAL
+         PERFORM L100-ADD-BMP
+         IF  ENDE
+             EXIT SECTION
+         END-IF
+     END-IF
+*G.03.02 - Ende
 
 **  ---> BMP 57 - Verschlüsselungsparameter ggf. übernehmen
      IF  W2TS-TBMP(53) = 1
@@ -2395,8 +2441,10 @@
  C300-AS-SPEZIELL SECTION.
  C300-00.
 **  ---> verzweigen je nach ROUTKZ
-     EVALUATE W-ROUTKZ
-
+*G.03.01 - VERF-AS verwenden hier
+*     EVALUATE W-ROUTKZ
+     EVALUATE VERF-AS
+*G.03.01 - Ende
          WHEN 05     PERFORM D305-AVIA
          WHEN 07     PERFORM D307-SHELL
          WHEN 10     PERFORM D310-TOTAL
@@ -2422,7 +2470,10 @@
 
          WHEN OTHER
                  SET ENDE TO TRUE
-                 MOVE W-ROUTKZ TO D-NUM4
+*G.03.01 - jetzt VERF-AS verwenden
+*                 MOVE W-ROUTKZ TO D-NUM4
+                 MOVE VERF-AS TO D-NUM4
+*G.03.01 - Ende
                  STRING  "Keine speziellen Verarbeitungsregeln "
                          "für Rout-KZ = "
                          D-NUM4
@@ -2544,6 +2595,52 @@
  C500-99.
      EXIT.
 
+******************************************************************
+* Key bestimmen
+*G.03.01 - muss bestimmt werden
+******************************************************************
+ D200-FIX-KEY SECTION.
+ D200-00.
+**  ---> wenn Schlüsseltabelle nur mit einem belegt ist, wieder zurück
+     IF  TK-MAX = 1
+         MOVE 1 TO C4-I1
+         EXIT SECTION
+     END-IF
+
+**  ---> nun muss doch gesucht werden
+     PERFORM VARYING C4-I1 FROM 1 BY 1
+             UNTIL   C4-I1 > TK-MAX
+
+         IF  TK-CARDID (C4-I1) NOT = W-CARDID
+         OR  TK-ROUTKZ (C4-I1) NOT = W-ROUTKZ
+**          ---> nächsten suchen
+             EXIT PERFORM CYCLE
+         END-IF
+
+**      ---> Schlüssel zur Verfügung stellen
+         MOVE TK-HEXKEY (C4-I1) TO W-MACKEYA
+         MOVE TK-HEXKEY (C4-I1) TO W-PACKEYA (1:4)
+         EXIT SECTION
+     END-PERFORM
+
+**  ---> hier sind keine Schlüssen gefunden worden
+     SET ENDE TO TRUE
+     MOVE W-ROUTKZ TO D-NUM4
+     MOVE W-CARDID TO D-NUM4OV
+     MOVE "Keine AS-Schlüssel in =KEYNAMEN gefunden für:" TO DATEN-BUFFER1
+     STRING  "ROUTKZ / CARDID = "
+             D-NUM4
+             " / "
+             D-NUM4OV
+                 delimited by size
+       INTO  DATEN-BUFFER2
+     END-STRING
+     PERFORM Z002-PROGERR
+     .
+ D200-99.
+     EXIT.
+     
+     
 ******************************************************************
 * spezielle Behandlung für das Avia-AS
 ******************************************************************
@@ -2941,7 +3038,10 @@
  E900-00.
      MOVE 1105 TO ERROR-NR of GEN-ERROR
      MOVE "=FCPARAM für: @" TO DATEN-BUFFER1
-     MOVE W-ROUTKZ  TO D-NUM4
+*G.03.01 - VERF-AS jetzt
+*     MOVE W-ROUTKZ  TO D-NUM4
+     MOVE VERF-AS  TO D-NUM4
+*G.03.01 - Ende
      MOVE S-ISONTYP TO D-NUM4M
      MOVE S-BMP     TO D-NUM4N
      MOVE W-CARDID  TO D-NUM4OV
@@ -4315,7 +4415,10 @@
              WHEN space  continue
 
              WHEN OTHER  SET ENDE TO TRUE
-                         MOVE W-ROUTKZ TO D-NUM4
+*G.03.01 - VERF-AS jetzt
+*                         MOVE W-ROUTKZ TO D-NUM4
+                         MOVE VERF-AS TO D-NUM4
+*G.03.01 - Ende
                          STRING  "Unbekannte Verarbeitungsregeln "
                                  "für Rout-KZ = "
                                  D-NUM4
@@ -4372,11 +4475,16 @@
  Z002-PROGERR SECTION.
  Z002-00.
 **  ---> Angaben für Terminal- und Trace-Nummer in BUFFER5 einstellen
-     STRING  "WEAT-Term-Nr./Trace-Nr.: "
-             W-TERMNR "/" W-TRACENR
+*G.03.01 - Fehlermeldung erweitert
+     MOVE W-CARDID TO D-NUM2
+     MOVE W-ROUTKZ TO D-NUM4
+     STRING  "TermNr/TraceNr/RoutKZ/Verf/Cardid: "
+             W-TERMNR "/" W-TRACENR "/" D-NUM4 "/"
+             VERF-AS  "/" D-NUM2
                  delimited by size
        INTO  DATEN-BUFFER5
      END-STRING
+*G.03.01 - Ende
 
 **  ---> holen Daten für Fehlertabelle
      MOVE 1 TO ERR-STAT OF GEN-ERROR

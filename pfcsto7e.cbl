@@ -45,8 +45,13 @@
 
 
 ****************************************************************
+<<<<<<< HEAD
 * Letzte Aenderung :: 2018-09-26
 * Letzte Version   :: G.02.01
+=======
+* Letzte Aenderung :: 2018-10-05
+* Letzte Version   :: G.02.03
+>>>>>>> DKVCHIP-25_R7-419_DKVCHIP-26
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -54,13 +59,26 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1420 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
+<<<<<<< HEAD
 * Auftrag          :: R7-404
+=======
+* Auftrag          :: R7-376
+>>>>>>> DKVCHIP-25_R7-419_DKVCHIP-26
 *
 * Aenderungen:
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
+<<<<<<< HEAD
+=======
+*G.02.03|2018-10-05| kus | DKVCHIP-23:
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*-------|----------|-----|-------------------------------------------*
+*G.02.02|2018-09-27| kus | R7-376:
+*       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
+*-------|----------|-----|-------------------------------------------*
+>>>>>>> DKVCHIP-25_R7-419_DKVCHIP-26
 *G.02.01|2018-09-26| kus | R7-404:
 *       |          |     | - KZ-VERF fuer Offl. not Chip "m"
 *-------|----------|-----|---------------------------------------*
@@ -663,7 +681,10 @@
      05      W-KANR-LEN          PIC S9(04) COMP.
      05      W18-BETRAG          PIC S9(16)V99 COMP.
      05      W-ZP-VERKAUF        PIC S9(18) COMP.
-
+*G.02.02 - AIID 
+     05      W-AIID              PIC X(11).
+*G.02.02 - Ende
+     
      05      W-ACX.
       10     W-AC                PIC 9(02).
      05      W-ACQUIRER-ID       PIC X(06).
@@ -831,7 +852,10 @@
 **          ---> Mapping ROUTKZ <-> APPL_KZ.IFSFAC
 **          --->
 **          ---> hier muss ggf. bei weiteren AS'sen erweitert werden
- 01          VERF-ROUTKZ         PIC 9(02).
+*G.02.02 - Refactoring VERF-ROUTKZ -> VERF-AS
+* 01          VERF-ROUTKZ         PIC 9(02).
+ 01          VERF-AS             PIC 9(02).
+*G.02.02 - Ende
           88 VERF-AG                         VALUE 15.
           88 VERF-AV                         VALUE 05.
           88 VERF-BP                         VALUE 14.
@@ -961,9 +985,10 @@
      05      S2-LFDNR             PIC S9(04) COMP VALUE ZEROS.
 *kl20180405 - G.01.06 - Ende
 
+*G.02.02 - Tabelle auf 150 vergroessert
 **          ---> AS-Keytabelle
  01          TK-KEYNAMEN.
-     05      TK-KEYNAMEN-TABELLE occurs 10.
+     05      TK-KEYNAMEN-TABELLE occurs 150.
       10     TK-ROUTKZ           PIC S9(04).
       10     TK-CARDID           PIC S9(04).
       10     TK-KEYNAME          PIC X(08).
@@ -971,10 +996,12 @@
       10     TK-ISOVERS          PIC X(02).
       10     TK-HEXKEY           PIC X(04).
       10     TK-HEXISO           PIC X(02).
+*G.02.02 - AIID hier mit speichern
+      10     TK-AIID             PIC X(11).
 
  01          TK-MAX              PIC S9(04) COMP.
- 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 10.
-
+ 01          TK-TAB-MAX          PIC S9(04) COMP VALUE 150.
+*G.02.02 - Ende
 
 **          --->
  01          W-TEILSTRING-TABELLE.
@@ -1170,6 +1197,12 @@
  EXEC SQL
     INVOKE =UMSWEAT  AS UMSWEAT
  END-EXEC
+ 
+*G.02.02 - neue Tabelle für AIID
+ EXEC SQL
+    INVOKE =FCAIID AS FCAIID
+ END-EXEC
+*G.02.02 - Ende
 
 ******************************************************************
 
@@ -1218,8 +1251,10 @@
      DECLARE KEYNAMEN_CURS CURSOR FOR
          SELECT   ROUTKZ, CARDID, KEYNAME, ISOGEN, ISOVERS
            FROM  =KEYNAMEN
-          WHERE   ROUTKZ = :ROUTKZ OF KEYNAMEN
-         ORDER  BY CARDID
+*G.02.02 - alle laden
+*          WHERE   ROUTKZ = :ROUTKZ of KEYNAMEN
+         ORDER  BY ROUTKZ, CARDID
+*G.02.02 - Ende
          BROWSE  ACCESS
  END-EXEC
 
@@ -1316,19 +1351,30 @@
 **  ---> Initialisierung Felder
      PERFORM C000-INIT
 
-**  ---> holen Parameter AS-ROUTKZ
-     MOVE "AS-ROUTKZ" TO STUP-PORTION
+     
+*G.02.02 - jetzt neu ueber Parameter AS-VERF
+***  ---> holen Parameter AS-ROUTKZ
+*     MOVE "AS-ROUTKZ" TO STUP-PORTION
+*     PERFORM P950-GETPARAMTEXT
+*     IF  PRG-ABBRUCH
+*         EXIT SECTION
+*     END-IF
+
+**  ---> holen Parameter AS-ROUTKZ 
+     MOVE "AS-VERF" TO STUP-PORTION
      PERFORM P950-GETPARAMTEXT
      IF  PRG-ABBRUCH
          EXIT SECTION
      END-IF
-
+     
 **  ---> holen Parameter für zuständiges AS
      MOVE STUP-TEXT (1:STUP-RESULT) TO ROUTKZ OF FCPARAM
-                                       W-ROUTKZ
+*                                       W-ROUTKZ
                                        S-ROUTKZ
-**                                    ---> für Artikelmapper
-                                       VERF-ROUTKZ
+***                                    ---> für Artikelmapper
+*                                       VERF-ROUTKZ
+                                       VERF-AS
+*G.02.02 - Ende
 
 **  ---> Anwendung setzen für Artikelmapper
 **  ---> (die auf Kommentar gesetzten sind default (AG))
@@ -1341,10 +1387,6 @@
 *G.00.14 - Anfang
          WHEN VERF-EU    SET AS-VERF-EU TO TRUE
 *G.00.14 - Ende
-
-*G.01.02 - Anfang
-         WHEN VERF-IQ    SET AS-VERF-IQ TO TRUE
-*G.01.02 - Ende
 
 *G.00.18 - Anfang
          WHEN VERF-LO    SET AS-VERF-LO TO TRUE
@@ -1426,12 +1468,13 @@
          EXIT SECTION
      END-IF
 
+*G.02.02 - zusätzlich AIID mit in diese Tabelle laden + alle Eintraege aus KEYNAMEN
 **  ---> AS Schlüssel MACKEYA und PACKEYA aus Tabelle =KEYNAMEN einlesen
 **  ---> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 **  ---> !!!! zunächstmal wird nur der erste eingelesen !!!!
 **  ---> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 **  ---> ersten Eintrag holen
-     MOVE W-ROUTKZ TO ROUTKZ OF KEYNAMEN
+*     MOVE W-ROUTKZ TO ROUTKZ OF KEYNAMEN
      PERFORM S930-OPEN-KEYNAMEN-CURSOR
      PERFORM S940-FETCH-KEYNAMEN-CURSOR
 
@@ -1457,6 +1500,9 @@
          PERFORM P900-WTHEX
          MOVE P-HEX8 (1:1) TO TK-HEXISO (C4-I1)
          MOVE P-HEX8 (2:1) TO TK-HEXISO (C4-I1) (2:1)
+         
+         PERFORM S960-SELECT-AIID
+         MOVE AIID OF FCAIID TO TK-AIID(C4-I1)
 
 **      ---> nächsten Eintrag holen
          PERFORM S940-FETCH-KEYNAMEN-CURSOR
@@ -1470,6 +1516,7 @@
          MOVE TK-HEXKEY (1) TO W-MACKEYA
          MOVE TK-HEXKEY (1) TO W-PACKEYA (1:4)
      END-IF
+*G.02.02 - Ende
 
 **  ---> holen Boxen-Monitor
      MOVE "BOXMON" TO STUP-PORTION
@@ -1548,7 +1595,10 @@
      MOVE IMSG-TERMID  TO W-FRE-TERMID
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
      MOVE IMSG-DATLEN  TO W-FRE-DATLEN
-
+*G.02.02 - ROUTKZ aus Drehscheibe holen
+     MOVE IMSG-ROUTKZ  TO W-ROUTKZ
+*G.02.02 - Ende
+     
 **  ---> Kontrolle der Anfrage <---
 **  ---> ist die Anfrage evtl. OK?
      PERFORM C100-ANFRAGE-CHECK
@@ -2061,19 +2111,28 @@
          EXIT SECTION
      END-IF
 
+*G.02.02 - AIID aus neuer Tabelle FCAIID (geladen bei Start)
 **  ---> BMP 32 - Netzbetreiber Kennung AIID
-     MOVE 32 TO S-BMP
-     MOVE 1  TO S-LFDNR
-     PERFORM U300-SEARCH-TAB
-     IF  PRM-NOT-FOUND
-         PERFORM E900-PUT-ERRLOG
-         SET ENDE TO TRUE
-         EXIT SECTION
-     END-IF
-     PERFORM U400-INTERPRET-ABWEICHUNG
-     MOVE 32           TO W207-XBMP
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE 32 TO S-BMP
+*     MOVE 1  TO S-LFDNR
+*     PERFORM U300-SEARCH-TAB
+*     IF  PRM-NOT-FOUND
+*         PERFORM E900-PUT-ERRLOG
+*         SET ENDE TO TRUE
+*         EXIT SECTION
+*     END-IF
+*     PERFORM U400-INTERPRET-ABWEICHUNG
+*     MOVE 32           TO W207-XBMP
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+     
+     MOVE 32     TO W207-XBMP
+     MOVE W-AIID TO W207-XCOBVAL
+     MOVE ZERO TO D-NUM4N
+     INSPECT W-AIID TALLYING D-NUM4N
+     FOR CHARACTERS BEFORE INITIAL " "
+     MOVE D-NUM4N TO W207-XCOBLEN 
+*G.02.02 - Ende
      PERFORM L100-ADD-BMP
      IF  ENDE
          EXIT SECTION
@@ -2155,7 +2214,9 @@
 
 *G.00.33 - Chipdaten in AS Anfrage
 **  ---> BMP 55 - wenn Chiperfassung
-     IF W-ERF-CHIP
+*G.02.03 - Chip Kontaktlos auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.02.03 - Ende
         MOVE 55          TO W207-XBMP
         MOVE W-BMP55-LEN TO W207-XCOBLEN
         MOVE W-BMP55     TO W207-XCOBVAL
@@ -2247,8 +2308,8 @@
  C300-AS-SPEZIELL SECTION.
  C300-00.
 **  ---> verzweigen je nach ROUTKZ
-     EVALUATE W-ROUTKZ
-
+*G.02.02 - VERF-AS jetzt
+     EVALUATE VERF-AS
          WHEN 05     PERFORM D305-AVIA
          WHEN 07     PERFORM D307-SHELL
          WHEN 10     PERFORM D310-TOTAL
@@ -2279,7 +2340,8 @@
          
          WHEN OTHER
                  SET ENDE TO TRUE
-                 MOVE W-ROUTKZ TO D-NUM4
+*                 MOVE W-ROUTKZ TO D-NUM4
+                 MOVE VERF-AS  TO D-NUM4
                  STRING  "Keine speziellen Verarbeitungsregeln "
                          "für Rout-KZ = "
                          D-NUM4
@@ -2290,6 +2352,7 @@
                  EXIT SECTION
 
      END-EVALUATE
+*G.02.02 - Ende
      .
  C300-99.
      EXIT.
@@ -2384,7 +2447,10 @@
      PERFORM VARYING C4-I1 FROM 1 BY 1
              UNTIL   C4-I1 > TK-MAX
 
+*G.02.02 - auch ROUTKZ Vergleich, da nun alle Eintraege geladen
          IF  TK-CARDID (C4-I1) NOT = W-CARDID
+         OR  TK-ROUTKZ (C4-I1) NOT = W-ROUTKZ
+*G.02.02 - Ende
 **          ---> nächsten suchen
              EXIT PERFORM CYCLE
          END-IF
@@ -2394,6 +2460,9 @@
          MOVE TK-HEXKEY (C4-I1) TO W-PACKEYA (1:4)
 **      ---> Schlüsselgeneration und -version bereitstellen
          MOVE TK-HEXISO (C4-I1) TO W-ISOGEN-VERS
+*G.02.02 - AIID speichern
+         MOVE TK-AIID (C4-I1)   TO W-AIID
+*G.02.02 - Ende
          EXIT SECTION
 
      END-PERFORM
@@ -3471,7 +3540,10 @@
  E900-00.
      MOVE 1105 TO ERROR-NR OF GEN-ERROR
      MOVE "=FCPARAM für: @" TO DATEN-BUFFER1
-     MOVE W-ROUTKZ  TO D-NUM4
+*G.02.02 - VERF-AS jetzt
+*     MOVE W-ROUTKZ  TO D-NUM4
+     MOVE VERF-AS   TO D-NUM4
+*G.02.02 - Ende
      MOVE W-CARDID  TO D-NUM4OV
      MOVE S-ISONTYP TO D-NUM4M
      MOVE S-BMP     TO D-NUM4N
@@ -3525,7 +3597,10 @@
       MOVE W-TERMNR (7:2)  TO        PNR        OF ASYNC70
       MOVE W-TERMNR        TO        TERMNR     OF ASYNC70
       MOVE W-TRACENR       TO        TRACENR    OF ASYNC70
-      MOVE 400             TO        ISONTYP    OF ASYNC70
+*G.01.XX - auch Wdh. NTYPE reinmoven
+*      MOVE 400             TO        ISONTYP    OF ASYNC70
+      MOVE W-NTYPE         TO        ISONTYP    OF ASYNC70
+*G.01.XX - Ende
       MOVE W-MDNR          TO        MDNR       OF ASYNC70
       MOVE W-TSNR          TO        TSNR       OF ASYNC70
       MOVE "FK"            TO        VKZ        OF ASYNC70
@@ -3561,7 +3636,10 @@
 **  ---> MAC-Bildung und Schlüsselwechsel über WSY7066
 **  ---> Datenbereich Message-datei external übergibt Daten für WSY7066
 *G.06.12 - Anfang
-   EVALUATE W-ROUTKZ
+*G.02.02 - VERF-AS jetzt
+*   EVALUATE W-ROUTKZ
+   EVALUATE VERF-AS
+*G.02.02 - Ende
        WHEN 22
             PERFORM F950-ASMAC-DUKPT
        WHEN OTHER
@@ -3672,7 +3750,8 @@
 *G.01.12 - neue KZ-VERF fuer Chip
 *G.00.16 - Anfang - Sonst fuktioniert =UMSWEAT bei man. Storno nicht
      IF OFFLINE-BUCHUNG  OF BUCHUNGS-FLAG
-        IF W-ERF-CHIP
+*G.02.03 - Chip Kontaktlos auch beachten
+        IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
             MOVE "q"         TO KZ-VERF        OF TXILOG70
         ELSE
 *G.02.01 - jetzt wirklich "m" und nicht mehr "k"
@@ -3680,7 +3759,8 @@
 *G.02.01 - Ende
         END-IF
      ELSE
-        IF W-ERF-CHIP
+        IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.02.03 - Ende
             MOVE "r"         TO KZ-VERF        OF TXILOG70
         ELSE
             MOVE "f"         TO KZ-VERF        OF TXILOG70
@@ -3698,7 +3778,8 @@
      MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    OF TXILOG70
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART OF TXILOG70
 *G.00.33 - Wenn Chip Erfassung -> EMV Daten loggen und Trans-Art aendern
-     IF W-ERF-CHIP
+*G.02.03 - Chip Kontaktlos auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
         MOVE W-BMP55-LEN TO LEN OF EMV-DATEN OF TXILOG70
         MOVE W-BMP55     TO VAL OF EMV-DATEN OF TXILOG70
      END-IF
@@ -3706,7 +3787,7 @@
 
 *kl20180316 - G.01.05 - Unterscheidung zwischen Chip und Spur2
 *     MOVE 221            TO KARTEN-ART     of TXILOG70
-     IF W-ERF-CHIP
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
      ELSE
@@ -3723,6 +3804,7 @@
             WHEN 01 MOVE "MO"       TO TRANS-ART      of TXILOG70
             WHEN 02 MOVE "2O"       TO TRANS-ART      of TXILOG70
             WHEN 05 MOVE "IC"       TO TRANS-ART      of TXILOG70
+            WHEN 07 MOVE "IC"       TO TRANS-ART      of TXILOG70
             WHEN OTHER CONTINUE
          END-EVALUATE
      ELSE
@@ -3730,9 +3812,11 @@
             WHEN 01 MOVE "ME"       TO TRANS-ART      of TXILOG70
             WHEN 02 MOVE "2E"       TO TRANS-ART      of TXILOG70
             WHEN 05 MOVE "OC"       TO TRANS-ART      of TXILOG70
+            WHEN 07 MOVE "OC"       TO TRANS-ART      of TXILOG70
             WHEN OTHER CONTINUE
          END-EVALUATE
      END-IF
+*G.02.03 - Ende
 *G.00.33 - Ende
 
      MOVE SPACES         TO TRANS-TYP      OF TXILOG70
@@ -5003,6 +5087,59 @@
      .
  S950-99.
      EXIT.
+     
+     
+******************************************************************
+* Select auf neue AIID-Tabelle
+*G.02.02 - neu
+******************************************************************
+ S960-SELECT-AIID SECTION.
+ S960-00.
+
+     EXEC SQL
+         SELECT AIID
+         INTO  :AIID     OF FCAIID
+         FROM  =FCAIID
+         WHERE ROUTKZ, CARDID =
+              :ROUTKZ    OF KEYNAMEN
+             ,:CARDID    OF KEYNAMEN
+         BROWSE ACCESS
+     END-EXEC
+     
+     
+     IF SQLCODE OF SQLCA = 100
+         EXEC SQL
+             SELECT AIID
+             INTO  :AIID     OF FCAIID
+             FROM  =FCAIID
+             WHERE ROUTKZ, CARDID =
+                  :ROUTKZ    OF KEYNAMEN
+                 ,0
+             BROWSE ACCESS
+         END-EXEC
+     END-IF
+     
+     EVALUATE SQLCODE OF SQLCA
+        WHEN 0      CONTINUE
+** ---> Dummy AIID, fuer RoutKZ, die nicht gepflegt sind
+        WHEN 100    MOVE "000000" TO AIID OF FCAIID
+        WHEN OTHER  MOVE  SQLCODE OF SQLCA    TO D-NUM4
+                    STRING "Fehler bei LESEN FCAIID: ", D-NUM4
+                    DELIMITED BY SIZE INTO DATEN-BUFFER1
+                    MOVE ROUTKZ OF KEYNAMEN TO D-NUM4M
+                    MOVE CARDID OF KEYNAMEN TO D-NUM4N
+                    STRING "ROUTKZ= ",
+                            D-NUM4M,
+                            " / CARDID= ",
+                            D-NUM4N,
+                            " oder 0"
+                    DELIMITED BY SIZE INTO DATEN-BUFFER2
+                    PERFORM Z002-PROGERR
+     END-EVALUATE
+
+     .
+ S960-99.
+     EXIT.
 
 ******************************************************************
 * Transaktionsbegrenzungen
@@ -5214,7 +5351,10 @@
              WHEN space  continue
 
              WHEN OTHER  SET ENDE TO TRUE
-                         MOVE W-ROUTKZ TO D-NUM4
+*G.02.02 - VERF-AS jetzt
+*                         MOVE W-ROUTKZ TO D-NUM4
+                         MOVE VERF-AS  TO D-NUM4
+*G.02.02 - Ende
                          STRING  "Unbekannte Verarbeitungsregeln "
                                  "für Rout-KZ = "
                                  D-NUM4
@@ -5288,11 +5428,16 @@
  Z002-PROGERR SECTION.
  Z002-00.
 **  ---> Angaben für Terminal- und Trace-Nummer in BUFFER5 einstellen
-     STRING  "WEAT-Term-Nr./Trace-Nr.: "
-             W-TERMNR "/" W-TRACENR
+*G.02.02 - Fehlermeldung erweitert
+     MOVE W-CARDID TO D-NUM2
+     MOVE W-ROUTKZ TO D-NUM4
+     STRING  "TermNr/TraceNr/RoutKZ/Verf/Cardid: "
+             W-TERMNR "/" W-TRACENR "/" D-NUM4 "/"
+             VERF-AS  "/" D-NUM2
                  delimited by size
        INTO  DATEN-BUFFER5
      END-STRING
+*G.02.02 - Ende
 
 **  ---> holen Daten für Fehlertabelle
      MOVE 1 TO ERR-STAT OF GEN-ERROR
