@@ -78,6 +78,8 @@
 *       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
 *       |          |     | RRIFSF-13:
 *       |          |     | - KM-Stand + Fahrzeugnummer an RR-AS
+*       |          |     | DKVCHIP-26:
+*       |          |     | - IFSF 22.1 konfigurierbar über FCPARAM
 *-------|----------|-----|-------------------------------------------*
 *G.07.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -2293,7 +2295,20 @@
 **  ---> BMP 22 - Eingabeart
      MOVE 22 TO W207-XBMP
      MOVE 12 TO W207-XCOBLEN
-     MOVE "B10201" TO W207-XCOBVAL
+*G.07.02 - Start von BMP 22 in FCPARAM definiert
+*     MOVE "B10201" TO W207-XCOBVAL
+*  ---> BMP 22 - Servicecode
+     MOVE 22 TO S-BMP
+     MOVE 1  TO S-LFDNR
+     PERFORM U300-SEARCH-TAB
+     IF  PRM-NOT-FOUND
+         PERFORM E900-PUT-ERRLOG
+         SET ENDE TO TRUE
+         EXIT SECTION
+     END-IF
+     PERFORM U400-INTERPRET-ABWEICHUNG
+     MOVE W-BUFFER     TO W207-XCOBVAL
+*G.07.02 - Ende 
      EVALUATE TRUE
          WHEN W-ERF-MANUELL      MOVE "6" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-MAGNET       MOVE "2" TO W207-XCOBVAL (7:1)
@@ -3397,43 +3412,40 @@
      SET W66-DEFAULT TO TRUE
      
 *G.07.02 - BMP 48-8 jetzt auch, Default Section kann verwendet werden
-*     PERFORM E310-BMP48-DEFAULT
+     PERFORM E310-BMP48-DEFAULT
      
-***** ÄNDERUNG KURZZEITIG RÜCKGÄNGIG, BIS NEUE SPECC BEI RR
-***** !!!!!!!!!!!!!!!!!!!!!! DANN BLOCK HIER DRUNTER AUSKOMMENTIEREN
-     
-**  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
-**  --->          noch Fahrerdaten, die einzustellen sind (48.8))
-**  --->          !!! bei Roadrunner allerdings nicht !!!
-**  ---> zunächst die BitMap erstellen
-     MOVE ALL ZEROES TO W-BYTEMAP-48
-     MOVE "1"        TO W-BYTEMAP-48(4:1)
-     MOVE "1"        TO W-BYTEMAP-48(14:1)
-     IF  GEODATA-YES
-         MOVE "1"    TO W-BYTEMAP-48(41:1)
-     END-IF
-     MOVE  LOW-VALUE TO W-BITMAP
-     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
-     MOVE 8        TO W-BUFFER-LEN
-     MOVE W-BITMAP TO W-BUFFER
-
-**  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
-     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
-     ADD 12 TO W-BUFFER-LEN
-
-     IF  GEODATA-YES
-         MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
-         ADD 20 TO W-BUFFER-LEN
-     END-IF
-
-**  +++> jetzt in die Nachricht einbauen
-     MOVE 48           TO W207-XBMP
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+***  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
+***  --->          noch Fahrerdaten, die einzustellen sind (48.8))
+***  --->          !!! bei Roadrunner allerdings nicht !!!
+***  ---> zunächst die BitMap erstellen
+*     MOVE ALL ZEROES TO W-BYTEMAP-48
+*     MOVE "1"        TO W-BYTEMAP-48(4:1)
+*     MOVE "1"        TO W-BYTEMAP-48(14:1)
+*     IF  GEODATA-YES
+*         MOVE "1"    TO W-BYTEMAP-48(41:1)
+*     END-IF
+*     MOVE  LOW-VALUE TO W-BITMAP
+*     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+*     MOVE 8        TO W-BUFFER-LEN
+*     MOVE W-BITMAP TO W-BUFFER
+*
+***  +++> und jetzt die Subfelder 4, 14 Fixwerte und ggf. 41
+*     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
+*     ADD 12 TO W-BUFFER-LEN
+*
+*     IF  GEODATA-YES
+*         MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
+*         ADD 20 TO W-BUFFER-LEN
+*     END-IF
+*
+***  +++> jetzt in die Nachricht einbauen
+*     MOVE 48           TO W207-XBMP
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
 *G.07.02 - Ende
      .
  D325-99.

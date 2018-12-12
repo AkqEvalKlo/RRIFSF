@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-10-05
-* Letzte Version   :: G.07.02
+* Letzte Aenderung :: 2018-12-12
+* Letzte Version   :: G.07.03
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -60,12 +60,16 @@
 * Kurzbeschreibung :: Die Terminal-Anfragen werden von diesem
 * Kurzbeschreibung :: Programm direkt beantwortet.
 * Package          :: ICC
-* Auftrag          :: DKVCHIP-23 DKVCHIP-24
 *
 * Aenderungen:
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.07.03|2018-12-12| kus | F1ICC-138:
+*       |          |     | - Keine AS Nachricht an MICA/TOTAL AS
+*       |          |     |   UMSWEAT Eintrag trotzdem und AC 0 
+*       |          |     |   an Terminal
 *-------|----------|-----|-------------------------------------------*
 *G.07.02|2018-10-05| kus | DKVCHIP-23:
 *       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
@@ -79,6 +83,8 @@
 *       |          |     |   -> Änderung aus G.03.00 rückgängig 
 *       |          |     | - wenn Term/Trace bereits in TXILOG70
 *       |          |     |   jetzt AC 81 und kein Logging
+*       |          |     | DKVCHIP-26:
+*       |          |     | - IFSF 22.1 konfigurierbar über FCPARAM
 *-------|----------|-----|-------------------------------------------*
 *G.07.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -1665,6 +1671,13 @@
 *
 *G.06.03 - Ende
 
+*G.07.03 - Für TOTAL/MICA R7 Offliner nie beauftragt, trotzdem AC 0 -> Umsatz Eintrag
+*          dafür Prüfort auf FEP stellen, dadurch keine AS-Anfrage aber Rest wie normale Trx
+     IF W-ROUTKZ = 10
+        SET PRF-FEP TO TRUE     
+     END-IF
+*G.07.03 - Ende
+
 *kl20160906 - G.06.08 - Bei FEP-Verarbeitung entfällt der komplette
 *                       AS-Anteil; Nur Eigenantwort mit AC = 0 + Logging
      IF PRF-AS
@@ -2299,6 +2312,20 @@
      MOVE 22 TO W207-XBMP
      MOVE 12 TO W207-XCOBLEN
      MOVE "B10101" TO W207-XCOBVAL
+*G.07.02 - Start von BMP 22 in FCPARAM definiert
+*     MOVE "B10101" TO W207-XCOBVAL
+*  ---> BMP 22 - Servicecode
+     MOVE 22 TO S-BMP
+     MOVE 99  TO S-LFDNR
+     PERFORM U300-SEARCH-TAB
+     IF  PRM-NOT-FOUND
+         PERFORM E900-PUT-ERRLOG
+         SET ENDE TO TRUE
+         EXIT SECTION
+     END-IF
+     PERFORM U400-INTERPRET-ABWEICHUNG
+     MOVE W-BUFFER     TO W207-XCOBVAL
+*G.07.02 - Ende 
      EVALUATE TRUE
          WHEN W-ERF-MANUELL      MOVE "6" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-MAGNET       MOVE "2" TO W207-XCOBVAL (7:1)

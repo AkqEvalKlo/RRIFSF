@@ -41,8 +41,8 @@
 
 
 *****************************************************************
-* Letzte Aenderung :: 2018-09-11
-* Letzte Version   :: G.02.01
+* Letzte Aenderung :: 2018-11-19
+* Letzte Version   :: G.02.02
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -56,6 +56,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar
+*-------|----------|-----|-------------------------------------------*
+*G.02.02|2018-11-19| kus | DKVCHIP-25:
+*       |          |     | - BMP 55 ggf. vom AS an TS weiterleiten
 *-------|----------|-----|-------------------------------------------*
 *G.02.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -2447,6 +2450,19 @@
              EXIT SECTION
          END-IF
      END-IF
+     
+*G.02.02 - Chipdaten vom AS? Dann ans Terminal 
+**  ---> BMP 55 - Chipdaten ggf. übernehmen
+     IF  IMSG-TBMP(55) = 1
+         MOVE 55            TO W207-XBMP
+         MOVE IMSG-TLEN(55) TO W207-XCOBLEN
+         MOVE IMSG-CF(IMSG-TPTR(55):IMSG-TLEN(55)) TO W207-XCOBVAL
+         PERFORM L100-ADD-BMP
+         IF  ENDE
+             EXIT SECTION
+         END-IF
+     END-IF
+*G.02.02 - Ende
 
 **  ---> BMP 57 - Verschlüsselungsparameter ggf. übernehmen
      IF  W2TS-TBMP(53) = 1

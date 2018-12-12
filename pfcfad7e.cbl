@@ -70,6 +70,8 @@
 *-------|----------|-----|---------------------------------------*
 *G.03.02|2018-10-05| kus | DKVCHIP-23:
 *       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | DKVCHIP-26:
+*       |          |     | - IFSF 22.1 konfigurierbar über FCPARAM
 *-------|----------|-----|-------------------------------------------*
 *G.03.01|2018-09-11| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -2202,6 +2204,20 @@
      MOVE 22 TO W207-XBMP
      MOVE 12 TO W207-XCOBLEN
      MOVE "210201" TO W207-XCOBVAL
+*G.03.02 - Start von BMP 22 in FCPARAM definiert
+*     MOVE "210201" TO W207-XCOBVAL
+*  ---> BMP 22 - Servicecode
+     MOVE 22 TO S-BMP
+     MOVE 1  TO S-LFDNR
+     PERFORM U300-SEARCH-TAB
+     IF  PRM-NOT-FOUND
+         PERFORM E900-PUT-ERRLOG
+         SET ENDE TO TRUE
+         EXIT SECTION
+     END-IF
+     PERFORM U400-INTERPRET-ABWEICHUNG
+     MOVE W-BUFFER     TO W207-XCOBVAL
+*G.03.02 - Ende 
      EVALUATE TRUE
          WHEN W-ERF-MANUELL      MOVE "6" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-MAGNET       MOVE "2" TO W207-XCOBVAL (7:1)
