@@ -68,8 +68,11 @@
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|----------|-----|---------------------------------------*
+*G.03.03|2018-11-05| das | R7-427:
+*       |          |     | - Keine VUNR Sonderlocke für ENI
+*-------|----------|-----|-------------------------------------------*
 *G.03.02|2018-10-05| kus | DKVCHIP-23:
-*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip
 *       |          |     | DKVCHIP-26:
 *       |          |     | - IFSF 22.1 konfigurierbar über FCPARAM
 *-------|----------|-----|-------------------------------------------*
@@ -80,10 +83,10 @@
 *       |          |     | - Kilometerstand in 48-8 TND
 *-------|----------|-----|-------------------------------------------*
 *G.02.51|2018-08-03| kus | R7-365/DKVCHIP-6:
-*       |          |     | - neues KZ-VERF fuer Chip 
+*       |          |     | - neues KZ-VERF fuer Chip
 *-------|----------|-----|---------------------------------------*
 *G.02.50|2018-07-27| kus | R7-364:
-*       |          |     | - Antworten bei 400er mit fehlendem 
+*       |          |     | - Antworten bei 400er mit fehlendem
 *       |          |     |   UMSWEAT Eintrag
 *-------|----------|-----|---------------------------------------*
 *G.02.49|2018-05-28| kus | RRIFSF-5:
@@ -686,7 +689,7 @@
      05      W-KANR-LEN          PIC S9(04) COMP.
      05      W18-BETRAG          PIC S9(16)V99 COMP.
      05      W-ZP-VERKAUF        PIC S9(18) COMP.
-*G.03.01 - AIID 
+*G.03.01 - AIID
      05      W-AIID              PIC X(11).
 *G.03.01 - Ende
 
@@ -1394,7 +1397,7 @@
 *     IF  PRG-ABBRUCH
 *         EXIT SECTION
 *     END-IF
-     
+
 **  ---> holen Parameter AS-VERF
      MOVE "AS-VERF" TO STUP-PORTION
      PERFORM P950-GETPARAMTEXT
@@ -1409,8 +1412,8 @@
 *                                       W-ROUTKZ
                                        S-ROUTKZ
 ***                                    ---> für Artikelmapper
-*                                       VERF-ROUTKZ     
-*G.03.01 - Ende                
+*                                       VERF-ROUTKZ
+*G.03.01 - Ende
 
 **  ---> Anwendung setzen für Artikelmapper
 **  ---> (die auf Kommentar gesetzten sind default (AG))
@@ -1537,7 +1540,7 @@
          PERFORM P900-WTHEX
          MOVE P-HEX8 (1:1) TO TK-HEXISO (C4-I1)
          MOVE P-HEX8 (2:1) TO TK-HEXISO (C4-I1) (2:1)
-         
+
          PERFORM S960-SELECT-AIID
          MOVE AIID OF FCAIID TO TK-AIID(C4-I1)
 
@@ -1641,7 +1644,7 @@
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
      MOVE IMSG-DATLEN  TO W-FRE-DATLEN
 *G.03.01 - ROUTKZ von Drehscheibe + Laden Schluessel
-     MOVE IMSG-ROUTKZ  TO W-ROUTKZ   
+     MOVE IMSG-ROUTKZ  TO W-ROUTKZ
 *G.03.01 - Ende
 
 **  ---> Kontrolle der Anfrage <---
@@ -2217,7 +2220,7 @@
      END-IF
      PERFORM U400-INTERPRET-ABWEICHUNG
      MOVE W-BUFFER     TO W207-XCOBVAL
-*G.03.02 - Ende 
+*G.03.02 - Ende
      EVALUATE TRUE
          WHEN W-ERF-MANUELL      MOVE "6" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-MAGNET       MOVE "2" TO W207-XCOBVAL (7:1)
@@ -2290,13 +2293,13 @@
 *     MOVE 32           TO W207-XBMP
 *     MOVE W-BUFFER-LEN TO W207-XCOBLEN
 *     MOVE W-BUFFER     TO W207-XCOBVAL
-     
+
      MOVE 32     TO W207-XBMP
      MOVE W-AIID TO W207-XCOBVAL
      MOVE ZERO TO D-NUM4N
      INSPECT W-AIID TALLYING D-NUM4N
      FOR CHARACTERS BEFORE INITIAL " "
-     MOVE D-NUM4N TO W207-XCOBLEN 
+     MOVE D-NUM4N TO W207-XCOBLEN
 *G.03.01 - Ende
      PERFORM L100-ADD-BMP
      IF  ENDE
@@ -2887,31 +2890,33 @@
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
 
-**  ---> BMP 42 muss hier nochmal überarbeitet werden
-     MOVE "3280"  TO W-BUFFER
-     MOVE 4      TO W-BUFFER-LEN
-
+*G.03.03
+***  ---> BMP 42 muss hier nochmal überarbeitet werden
+*     MOVE "3280"  TO W-BUFFER
+*     MOVE 4      TO W-BUFFER-LEN
+*
 **  ---> und nun der helle Wahnsinn !!!  lt. Kay für erfolgreiche Tests
-     IF  W-MDNR = 99 and W-TSNR = 1
-         MOVE 1154 TO W-KONV-TSNR
-     ELSE
-         MOVE W-TSNR TO W-KONV-TSNR
-     END-IF
-
+*     IF  W-MDNR = 99 and W-TSNR = 1
+*         MOVE 1154 TO W-KONV-TSNR
+*     ELSE
+*         MOVE W-TSNR TO W-KONV-TSNR
+*     END-IF
+*
 **  ---> führende Nullen entfernen
-     MOVE ZERO TO C4-PTR
-     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
-     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
-         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
-     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
-
-     MOVE 42           TO W207-XBMP
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+*     MOVE ZERO TO C4-PTR
+*     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
+*     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
+*         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
+*     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
+*
+*     MOVE 42           TO W207-XBMP
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+*G.03.03 Ende
 
 **  ---> und BMP48 aufbereiten
      PERFORM E310-BMP48-DEFAULT
@@ -3022,7 +3027,7 @@
      MOVE  LOW-VALUE TO W-BITMAP
      MOVE SPACES     TO W207-XCOBVAL
      MOVE 8          TO W207-XCOBLEN
-    
+
 **  +++> jetzt das Subfeld 4 (Fixwert)
      MOVE "1"        TO W-BYTEMAP-48(4:1)
      MOVE "0000000001" TO W207-XCOBVAL (W207-XCOBLEN + 1:)
@@ -3038,13 +3043,13 @@
 **  +++>  nun die Bitmap einfügen
      ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
      MOVE W-BITMAP TO W207-XCOBVAL (1:8)
-     
+
      MOVE 48 TO W207-XBMP
      PERFORM L100-ADD-BMP
      IF  ENDE
          EXIT SECTION
      END-IF
-     
+
 *     continue
 *G.02.52 - Ende
      .
@@ -4547,7 +4552,7 @@
 *G.02.33 - Fuer Select Statement Daten wieder moven
      ELSE
         MOVE WUMS-UMSATZ TO UMSWEAT
-*G.02.33 - Ende 
+*G.02.33 - Ende
      END-IF
      .
  M180-99.
@@ -5469,7 +5474,7 @@
      .
  S950-99.
      EXIT.
-     
+
 ******************************************************************
 * Select auf neue AIID-Tabelle
 *G.03.01 - neu
@@ -5486,8 +5491,8 @@
              ,:CARDID    OF KEYNAMEN
          BROWSE ACCESS
      END-EXEC
-     
-     
+
+
      IF SQLCODE OF SQLCA = 100
          EXEC SQL
              SELECT AIID
@@ -5499,7 +5504,7 @@
              BROWSE ACCESS
          END-EXEC
      END-IF
-     
+
      EVALUATE SQLCODE OF SQLCA
         WHEN 0      CONTINUE
 ** ---> Dummy AIID, fuer RoutKZ, die nicht gepflegt sind

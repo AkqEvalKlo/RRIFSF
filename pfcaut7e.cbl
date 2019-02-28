@@ -57,23 +57,31 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-10-05
-* Letzte Version   :: G.04.02
+* Letzte Aenderung :: 2019-02-11
+* Letzte Version   :: G.04.05
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
 * Kurzbeschreibung :: nur Terminalnachrichten von Typ 200, die
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1200 umgesetzt
 * Kurzbeschreibung :: werden.
-* Auftrag          :: R7-376
 *
-* Aenderungen
+* Aenderungen:
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
 *-------|----------|-----|-------------------------------------------*
+*G.04.05|2019-02-11| kus | R7-471:
+*       |          |     | - Neu Kompilierung für Modul PFCBNS7
+*-------|----------|-----|--------------------------------------------------*
+*G.04.04|2018-12-17| das | R7-435:
+*       |          |     | - Keine VUNR Sonderlocke für BP
+*-------|----------|-----|-------------------------------------------*
+*G.04.03|2018-12-05| das | R7-424:
+*       |          |     | - Keine VUNR Sonderlocke für ENI
+*-------|----------|-----|-------------------------------------------*
 *G.04.02|2018-10-05| kus | DKVCHIP-23:
-*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip
 *       |          |     | RRIFSF-13:
 *       |          |     | - KM-Stand + Fahrzeugnummer an RR-AS
 *       |          |     | DKVCHIP-26:
@@ -88,10 +96,10 @@
 *       |          |     | - Kilometerstand in 48-8 TND
 *-------|----------|-----|-------------------------------------------*
 *G.03.19|2018-08-03| kus | R7-365/DKVCHIP-2:
-*       |          |     | - neues KZ-VERF fuer Chip 
+*       |          |     | - neues KZ-VERF fuer Chip
 *-------|----------|-----|-------------------------------------------*
 *G.03.18|2018-06-20| kus | R7-351:
-*       |          |     | - MAC Fehler Eigenantwort bei Eurowag, 
+*       |          |     | - MAC Fehler Eigenantwort bei Eurowag,
 *       |          |     |   wenn Artikelprf. fehlerhaft, behoben
 *-------|----------|-----|-------------------------------------------*
 *G.03.17|2018-05-25| kl  | RRIFSF-2:
@@ -675,10 +683,10 @@
      05      W18-BETRAG          PIC S9(16)V99 COMP VALUE ZEROS.
      05      W-BMP07             PIC 9(10)          VALUE ZEROS.
      05      W-ZP-VERKAUF        PIC S9(18)    COMP VALUE ZEROS.
-*G.04.01 - AIID 
+*G.04.01 - AIID
      05      W-AIID              PIC X(11).
 *G.04.01 - Ende
-     
+
      05      W-ACX.
       10     W-AC                PIC 9(02) VALUE ZEROS.
      05      W-ACQUIRER-ID       PIC X(06).
@@ -872,7 +880,7 @@
 *kl20180529 - G.03.17 - Neues AS: Roadrunner
           88 VERF-RR                         VALUE 25.
 *kl20180529 - G.03.17 - Ende
-          
+
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -1005,7 +1013,7 @@
       10     TK-HEXISO           PIC X(02).
 *G.04.01 - AIID hier mit speichern
       10     TK-AIID             PIC X(11).
-      
+
  01          TK-MAX              PIC S9(04) COMP VALUE ZEROS.
  01          TK-TAB-MAX          PIC S9(04) COMP VALUE 150.
 *G.04.01 - Ende
@@ -1379,7 +1387,7 @@
 **  ---> Initialisierung Felder
      PERFORM C000-INIT
 
-     
+
 *G.04.01 - neuen Parameter AS-VERF laden und nicht mehr AS-ROUTKZ
 ***  ---> holen Parameter AS-ROUTKZ
 *     MOVE "AS-ROUTKZ" TO STUP-PORTION
@@ -1387,7 +1395,7 @@
 *     IF  PRG-ABBRUCH
 *         EXIT SECTION
 *     END-IF
-     
+
 **  ---> holen Parameter AS-VERF
      MOVE "AS-VERF" TO STUP-PORTION
      PERFORM P950-GETPARAMTEXT
@@ -1402,9 +1410,9 @@
 *                                       W-ROUTKZ
                                        S-ROUTKZ
 ***                                    ---> für Artikelmapper
-*                                       VERF-ROUTKZ     
-*G.04.01 - Ende                                  
-                                       
+*                                       VERF-ROUTKZ
+*G.04.01 - Ende
+
 **  ---> Anwendung setzen für Artikelmapper
 **  ---> (die auf Kommentar gesetzten sind default (AG))
      EVALUATE TRUE
@@ -1412,7 +1420,7 @@
 *        WHEN VERF-AG    SET AS-VERF-AG TO TRUE
 *        WHEN VERF-AV    SET AS-VERF-AV TO TRUE
 *kl20180529 - G.03.17 - Neues Format RoadRunner (eigentlich
-*                       ueberfluessig, aber sicherheitshalber 
+*                       ueberfluessig, aber sicherheitshalber
 *                       definieren)
 *        WHEN VERF-RR    SET AS-VERF-RR TO TRUE
 *kl20180529 - G.03.17 - Ende
@@ -1444,7 +1452,7 @@
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
 
      END-EVALUATE
-    
+
 
 **  ---> interne Tabelle initialisieren
 *kl20180109 - G.03.09 - Initialisieren mit T-TAB-MAX
@@ -1548,7 +1556,7 @@
 
          PERFORM S960-SELECT-AIID
          MOVE AIID OF FCAIID TO TK-AIID(C4-I1)
-         
+
 **      ---> nächsten Eintrag holen
          PERFORM S940-FETCH-KEYNAMEN-CURSOR
 
@@ -1649,7 +1657,7 @@
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
      MOVE IMSG-DATLEN  TO W-FRE-DATLEN
 *G.04.01 - ROUTKZ von Drehscheibe + Laden Schluessel
-     MOVE IMSG-ROUTKZ  TO W-ROUTKZ   
+     MOVE IMSG-ROUTKZ  TO W-ROUTKZ
 *G.04.01 - Ende
 
 **  ---> Kontrolle der Anfrage <---
@@ -2379,7 +2387,7 @@
      MOVE 12 TO W207-XCOBLEN
 *G.04.02 - Start von BMP 22 in FCPARAM definiert
 *     MOVE "B10101" TO W207-XCOBVAL
-*  ---> BMP 22 - Servicecode
+*  ---> BMP 59 - Transportdaten
      MOVE 22 TO S-BMP
      MOVE 1  TO S-LFDNR
      PERFORM U300-SEARCH-TAB
@@ -2390,7 +2398,7 @@
      END-IF
      PERFORM U400-INTERPRET-ABWEICHUNG
      MOVE W-BUFFER     TO W207-XCOBVAL
-*G.04.02 - Ende 
+*G.04.02 - Ende
      EVALUATE TRUE
          WHEN W-ERF-MANUELL      MOVE "6" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-MAGNET       MOVE "2" TO W207-XCOBVAL (7:1)
@@ -2442,13 +2450,13 @@
 *     MOVE 32           TO W207-XBMP
 *     MOVE W-BUFFER-LEN TO W207-XCOBLEN
 *     MOVE W-BUFFER     TO W207-XCOBVAL
-     
+
      MOVE 32     TO W207-XBMP
      MOVE W-AIID TO W207-XCOBVAL
      MOVE ZERO TO D-NUM4N
      INSPECT W-AIID TALLYING D-NUM4N
      FOR CHARACTERS BEFORE INITIAL " "
-     MOVE D-NUM4N TO W207-XCOBLEN 
+     MOVE D-NUM4N TO W207-XCOBLEN
 *G.04.01 - Ende
      PERFORM L100-ADD-BMP
      IF  ENDE
@@ -2545,7 +2553,7 @@
      END-IF
 *G.03.18 - Ende
 
-     
+
 
 *  ---> BMP 52 - PAK (muss umgeschlüsselt werden)
      IF  PAC-YES
@@ -2657,7 +2665,7 @@
          EXIT SECTION
      END-IF
 
-     
+
 *G.03.18 - wird frueher ausgefuehrt
 ***G.02.00 - Anfang
 *     IF W207-TBMP(63) = 1
@@ -3222,34 +3230,31 @@
          EXIT SECTION
      END-IF
 
+*G.04.04 VUNR jetzt aus TSKART40
 **  ---> BMP 42 - VUNR wird hier überschrieben
-     MOVE 42 TO S-BMP
-     MOVE 1  TO S-LFDNR
-     PERFORM U300-SEARCH-TAB
-     IF  PRM-NOT-FOUND
-         PERFORM E900-PUT-ERRLOG
-         SET ENDE TO TRUE
-         EXIT SECTION
-     END-IF
+*     MOVE 42 TO S-BMP
+*     MOVE 1  TO S-LFDNR
+*     PERFORM U300-SEARCH-TAB
+*     IF  PRM-NOT-FOUND
+*         PERFORM E900-PUT-ERRLOG
+*         SET ENDE TO TRUE
+*         EXIT SECTION
+*     END-IF
+*
+*     PERFORM U400-INTERPRET-ABWEICHUNG
+*     MOVE 42           TO W207-XBMP
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     MOVE W-MDNR (7:2) TO W207-XCOBVAL (W207-XCOBLEN + 1:2)
+*
+*
+*     ADD 10 TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
 
-     PERFORM U400-INTERPRET-ABWEICHUNG
-     MOVE 42           TO W207-XBMP
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     MOVE W-MDNR (7:2) TO W207-XCOBVAL (W207-XCOBLEN + 1:2)
-
-*G.02.12 - Anfang
-*    MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 9:8)
-**
-     MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 3:8)
-*G.02.12 - Anfang
-
-     ADD 10 TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
-
+*G.04.04 ENDE
 *G.02.12 - Anfang
 
 **  ---> und BMP48 aufbereiten
@@ -3274,31 +3279,33 @@
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
 
+*G.04.03-
 **  ---> BMP 42 muss hier nochmal überarbeitet werden
-     MOVE "3280"  TO W-BUFFER
-     MOVE 4      TO W-BUFFER-LEN
-
+*     MOVE "3280"  TO W-BUFFER
+*     MOVE 4      TO W-BUFFER-LEN
+*
 **  ---> und nun der helle Wahnsinn !!!  lt. Kay für erfolgreiche Tests
-     IF  W-MDNR = 99 and W-TSNR = 1
-         MOVE 1154 TO W-KONV-TSNR
-     ELSE
-         MOVE W-TSNR TO W-KONV-TSNR
-     END-IF
+*     IF  W-MDNR = 99 and W-TSNR = 1
+*         MOVE 1154 TO W-KONV-TSNR
+*     ELSE
+*         MOVE W-TSNR TO W-KONV-TSNR
+*     END-IF
 
 **  ---> führende Nullen entfernen
-     MOVE ZERO TO C4-PTR
-     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
-     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
-         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
-     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
-
-     MOVE 42           TO W207-XBMP
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+*     MOVE ZERO TO C4-PTR
+*     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
+*     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
+*         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
+*     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
+*
+*     MOVE 42           TO W207-XBMP
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+*G.04.03 Ende
 
 **  ---> und BMP48 aufbereiten
      PERFORM E310-BMP48-DEFAULT
@@ -3403,12 +3410,12 @@
 **  ---> Anwendung für MAC-Bildung setzen
 *     SET W66-DEFAULT TO TRUE
      SET W66-TND TO TRUE
-     
-     
-     
+
+
+
 *G.03.20 - Jetzt auch Subfeld 8, DEFAULT-Routine fuer 48 kann verwendet werden
      PERFORM E310-BMP48-DEFAULT
-     
+
 **  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
 **  --->          noch Fahrerdaten, die einzustellen sind (48.8))
 **  --->          !!! bei TND/Avia allerdings nicht !!!
@@ -3433,7 +3440,7 @@
 *     MOVE "000000000103" TO W-BUFFER (W-BUFFER-LEN + 1:)
 *     ADD 12 TO W-BUFFER-LEN
 
-     
+
 **G.02.21 - Anfang
 ***   IF  GEODATA-YES
 ***       MOVE GEO-BUFFER TO W-BUFFER (W-BUFFER-LEN + 1:)
@@ -3449,7 +3456,7 @@
 *     IF  ENDE
 *         EXIT SECTION
 *     END-IF
-     
+
 *G.03.20 - Ende
      .
  D318-99.
@@ -3650,7 +3657,7 @@
 
 *G.04.02 - BMP 48-8 jetzt auch, Default kann verwendet werden
      PERFORM E310-BMP48-DEFAULT
-     
+
 ***  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
 ***  --->          noch Fahrerdaten, die einzustellen sind (48.8))
 ***  --->          !!! bei Avia allerdings nicht !!!
@@ -4106,7 +4113,7 @@
      MOVE CARDID of TSKART40 TO AMP-CARDID
 
 *G.02.09 - Anfang
-*kl20180529 - G.03.17 - Das ist schoen, aber Uerfluessig 
+*kl20180529 - G.03.17 - Das ist schoen, aber Uerfluessig
 *                       (s.u. direkt nach Evaluate)
 *     EVALUATE W-ROUTKZ
 
@@ -4531,7 +4538,7 @@
      END-IF
 *G.03.19 - neues KZ-VERF fuer Chip
 *    MOVE "f"            TO KZ-VERF        of TXILOG70
-     
+
      IF  UMS-ZAHLUNG
          MOVE "Z"        TO KZ-UMSATZ      of TXILOG70
      ELSE
@@ -4701,7 +4708,7 @@
      .
  G130-99.
      EXIT.
-     
+
 
 ******************************************************************
 * Felder zusaetzlich in Nachricht einbauen
@@ -5964,8 +5971,8 @@
      .
  S950-99.
      EXIT.
-     
-     
+
+
 ******************************************************************
 * Select auf neue AIID-Tabelle
 *G.04.01 - neu
@@ -5982,8 +5989,8 @@
              ,:CARDID    OF KEYNAMEN
          BROWSE ACCESS
      END-EXEC
-     
-     
+
+
      IF SQLCODE OF SQLCA = 100
          EXEC SQL
              SELECT AIID
@@ -5995,7 +6002,7 @@
              BROWSE ACCESS
          END-EXEC
      END-IF
-     
+
      EVALUATE SQLCODE OF SQLCA
         WHEN 0      CONTINUE
 ** ---> Dummy AIID, fuer RoutKZ, die nicht gepflegt sind

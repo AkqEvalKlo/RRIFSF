@@ -45,8 +45,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2018-10-05
-* Letzte Version   :: G.02.03
+* Letzte Aenderung :: 2019-02-25
+* Letzte Version   :: G.02.07
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -54,15 +54,31 @@
 * Kurzbeschreibung :: auf AS-Nachrichten vom Typ 1420 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: R7-376
 *
 * Aenderungen:
 *
-*----------------------------------------------------------------*
-* Vers. | Datum    | von | Kommentar                             *
-*-------|----------|-----|---------------------------------------*
+*---------------------------------------------------------------------*
+* Vers. | Datum    | von | Kommentar                                  *
+*-------|----------|-----|--------------------------------------------*
+*G.02.07|2019-02-25| kus | R7-481: 
+*       |          |     | - AIID soll in BMP 33 an Terminal geschickt
+*       |          |     |   werden
+*       |          |     | F1ICC-147
+*       |          |     | - KZ-BEARB TXILOG70 richtig füllen
+*-------|----------|-----|--------------------------------------------*
+*G.02.06|2019-02-08| sk  | R7-468: richtige ASID in TXILOG70 speichern
+*-------|----------|-----|--------------------------------------------*
+*G.02.05|2018-12-14| kus | R7-439:
+*       |          |     | - Keine VUNR Sonderlocke für BP
+*       |          |     | DKVCHIP-27:
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip,
+*       |          |     |   fehlte noch an einer Stelle
+*-------|----------|-----|-------------------------------------------*
+*G.02.04|2018-11-05| das | R7-428:
+*       |          |     | - Keine VUNR Sonderlocke für ENI
+*-------|----------|-----|-------------------------------------------*
 *G.02.03|2018-10-05| kus | DKVCHIP-23:
-*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip
 *-------|----------|-----|-------------------------------------------*
 *G.02.02|2018-09-27| kus | R7-376:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -71,7 +87,7 @@
 *       |          |     | - KZ-VERF fuer Offl. not Chip "m"
 *-------|----------|-----|---------------------------------------*
 *G.01.12|2018-08-03| kus | R7-365/DKVCHIP-8:
-*       |          |     | - neues KZ-VERF fuer Chip 
+*       |          |     | - neues KZ-VERF fuer Chip
 *-------|----------|-----|---------------------------------------*
 *G.01.11|2018-05-28| kl  | F1ICC-114:
 *       |          |     | - Branchänderung KUS vom 25.05.2018
@@ -669,10 +685,10 @@
      05      W-KANR-LEN          PIC S9(04) COMP.
      05      W18-BETRAG          PIC S9(16)V99 COMP.
      05      W-ZP-VERKAUF        PIC S9(18) COMP.
-*G.02.02 - AIID 
+*G.02.02 - AIID
      05      W-AIID              PIC X(11).
 *G.02.02 - Ende
-     
+
      05      W-ACX.
       10     W-AC                PIC 9(02).
      05      W-ACQUIRER-ID       PIC X(06).
@@ -862,7 +878,7 @@
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
-          
+
 *G.01.02 - Anfang
           88 VERF-IQ                         VALUE 24.
 *G.01.02 - Ende
@@ -870,7 +886,7 @@
 *kl20180525 - G.01.10 - Integration Roadrunner AS
           88 VERF-RR                         VALUE 25.
 *kl20180525 - G.01.10 - Ende
-          
+
 
 **          ---> Verfahrensfestlegung für Artikelmapper
 **          ---> AG, AV und TN sind gleich (werden wie AG behandelt)
@@ -900,7 +916,7 @@
 *kl20180525 - G.01.10 - Integration Roadrunner AS
           88 AS-VERF-RR                      VALUE "RR".
 *kl20180525 - G.01.10 - Ende
-                 
+
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
 **          ---> Parametertabelle für Autorisierungssystem
@@ -1185,7 +1201,7 @@
  EXEC SQL
     INVOKE =UMSWEAT  AS UMSWEAT
  END-EXEC
- 
+
 *G.02.02 - neue Tabelle für AIID
  EXEC SQL
     INVOKE =FCAIID AS FCAIID
@@ -1339,7 +1355,7 @@
 **  ---> Initialisierung Felder
      PERFORM C000-INIT
 
-     
+
 *G.02.02 - jetzt neu ueber Parameter AS-VERF
 ***  ---> holen Parameter AS-ROUTKZ
 *     MOVE "AS-ROUTKZ" TO STUP-PORTION
@@ -1348,13 +1364,13 @@
 *         EXIT SECTION
 *     END-IF
 
-**  ---> holen Parameter AS-ROUTKZ 
+**  ---> holen Parameter AS-ROUTKZ
      MOVE "AS-VERF" TO STUP-PORTION
      PERFORM P950-GETPARAMTEXT
      IF  PRG-ABBRUCH
          EXIT SECTION
      END-IF
-     
+
 **  ---> holen Parameter für zuständiges AS
      MOVE STUP-TEXT (1:STUP-RESULT) TO ROUTKZ OF FCPARAM
 *                                       W-ROUTKZ
@@ -1488,7 +1504,7 @@
          PERFORM P900-WTHEX
          MOVE P-HEX8 (1:1) TO TK-HEXISO (C4-I1)
          MOVE P-HEX8 (2:1) TO TK-HEXISO (C4-I1) (2:1)
-         
+
          PERFORM S960-SELECT-AIID
          MOVE AIID OF FCAIID TO TK-AIID(C4-I1)
 
@@ -1586,7 +1602,7 @@
 *G.02.02 - ROUTKZ aus Drehscheibe holen
      MOVE IMSG-ROUTKZ  TO W-ROUTKZ
 *G.02.02 - Ende
-     
+
 **  ---> Kontrolle der Anfrage <---
 **  ---> ist die Anfrage evtl. OK?
      PERFORM C100-ANFRAGE-CHECK
@@ -1900,8 +1916,12 @@
 
 
 *G.00.33 - Chipdaten, muessen vorliegen/fehlen je nach Erfassungsart
-     IF W-ERF-CHIP AND IMSG-TBMP(55) = 0
-     OR NOT W-ERF-CHIP AND IMSG-TBMP(55) = 1
+*G.02.05 - hier kontaktlos auch wie Chip behandeln
+     IF W-ERF-CHIP       AND IMSG-TBMP(55) = 0
+     OR W-ERF-KONTAKTLOS AND IMSG-TBMP(55) = 0
+     OR (NOT W-ERF-CHIP  AND IMSG-TBMP(55) = 1
+     AND NOT W-ERF-KONTAKTLOS AND IMSG-TBMP(55) = 1)
+*G.02.05 - Ende
          MOVE 30 TO W-AC
          MOVE "falsche Kombination BMP 22 und 55"
              TO DATEN-BUFFER1
@@ -2113,13 +2133,13 @@
 *     MOVE 32           TO W207-XBMP
 *     MOVE W-BUFFER-LEN TO W207-XCOBLEN
 *     MOVE W-BUFFER     TO W207-XCOBVAL
-     
+
      MOVE 32     TO W207-XBMP
      MOVE W-AIID TO W207-XCOBVAL
      MOVE ZERO TO D-NUM4N
      INSPECT W-AIID TALLYING D-NUM4N
      FOR CHARACTERS BEFORE INITIAL " "
-     MOVE D-NUM4N TO W207-XCOBLEN 
+     MOVE D-NUM4N TO W207-XCOBLEN
 *G.02.02 - Ende
      PERFORM L100-ADD-BMP
      IF  ENDE
@@ -2325,7 +2345,7 @@
 *kl20180525 - G.01.10 - Integration Roadrunner AS
          WHEN 25     PERFORM D325-ROADRUNNER
 *kl20180525 - G.01.10 - Integration Roadrunner AS
-         
+
          WHEN OTHER
                  SET ENDE TO TRUE
 *                 MOVE W-ROUTKZ TO D-NUM4
@@ -2710,32 +2730,34 @@
 
 *G.00.29 - Ende
 
-**  ---> BMP 42 - VUNR wird hier überschrieben
-     MOVE 42 TO S-BMP
-     MOVE 1  TO S-LFDNR
-     PERFORM U300-SEARCH-TAB
-     IF  PRM-NOT-FOUND
-         PERFORM E900-PUT-ERRLOG
-         SET ENDE TO TRUE
-         EXIT SECTION
-     END-IF
-
-     PERFORM U400-INTERPRET-ABWEICHUNG
-     MOVE 42           TO W207-XBMP
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     MOVE W-MDNR (7:2) TO W207-XCOBVAL (W207-XCOBLEN + 1:2)
-
-*G.00.13 - Anfang
-*    MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 9:8)
-**
-     MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 3:8)
-
-     ADD 10 TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+*G.02.05 - Sonderlocke ausbauen
+***  ---> BMP 42 - VUNR wird hier überschrieben
+*     MOVE 42 TO S-BMP
+*     MOVE 1  TO S-LFDNR
+*     PERFORM U300-SEARCH-TAB
+*     IF  PRM-NOT-FOUND
+*         PERFORM E900-PUT-ERRLOG
+*         SET ENDE TO TRUE
+*         EXIT SECTION
+*     END-IF
+*
+*     PERFORM U400-INTERPRET-ABWEICHUNG
+*     MOVE 42           TO W207-XBMP
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     MOVE W-MDNR (7:2) TO W207-XCOBVAL (W207-XCOBLEN + 1:2)
+*
+**G.00.13 - Anfang
+**    MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 9:8)
+***
+*     MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 3:8)
+*
+*     ADD 10 TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+*G.02.05 - Ende
 
 **  ---> und BMP48 aufbereiten
      PERFORM E310-BMP48-DEFAULT
@@ -2768,31 +2790,33 @@
 
 *G.00.29 - Ende
 
+*G.02.04
 **  ---> BMP 42 muss hier nochmal überarbeitet werden
-     MOVE "3280"  TO W-BUFFER
-     MOVE 4      TO W-BUFFER-LEN
-
+*     MOVE "3280"  TO W-BUFFER
+*     MOVE 4      TO W-BUFFER-LEN
+*
 **  ---> und nun der helle Wahnsinn !!!  lt. Kay für erfolgreiche Tests
-     IF  W-MDNR = 99 and W-TSNR = 1
-         MOVE 1154 TO W-KONV-TSNR
-     ELSE
-         MOVE W-TSNR TO W-KONV-TSNR
-     END-IF
+*     IF  W-MDNR = 99 and W-TSNR = 1
+*         MOVE 1154 TO W-KONV-TSNR
+*     ELSE
+*         MOVE W-TSNR TO W-KONV-TSNR
+*     END-IF
 
 **  ---> führende Nullen entfernen
-     MOVE ZERO TO C4-PTR
-     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
-     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
-         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
-     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
-
-     MOVE 42           TO W207-XBMP
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+*     MOVE ZERO TO C4-PTR
+*     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
+*     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
+*         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
+*     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
+*
+*     MOVE 42           TO W207-XBMP
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+*G.02.04 Ende
 
 **  ---> und BMP48 aufbereiten
      PERFORM E310-BMP48-DEFAULT
@@ -3021,13 +3045,13 @@
 * spezielle Behandlung für das LogPay-AS
 * ggf. mit Hilfe der Parameter aus Tabelle =FCPARAM
 ******************************************************************
-*kl20180525 - G.01.10 - D[Routkennzeichen]-[AS] !!!         
+*kl20180525 - G.01.10 - D[Routkennzeichen]-[AS] !!!
 * D326-STIGLECHNER SECTION.
 * D326-00.
  D324-STIGLECHNER SECTION.
  D324-00.
 *kl20180525 - G.01.10 - D[Routkennzeichen]-[AS] !!!
- 
+
 **  ---> Anwendung für MAC-Bildung setzen
 **   SET W66-DEFAULT TO TRUE
      SET W66-DKV     TO TRUE
@@ -3286,13 +3310,20 @@
      MOVE 0410 TO W207-NTYPE
 
 **  ---> BMP 33: WEAT als AS-ID
+*G.02.07 - Die AIID soll als AS-ID an die Terminals gesendet werden
      MOVE 33       TO W207-XBMP
-     MOVE "740000" TO W207-XCOBVAL
-     MOVE 6        TO W207-XCOBLEN
+*     MOVE "740000" TO W207-XCOBVAL
+*     MOVE 6        TO W207-XCOBLEN
+     MOVE W-AIID TO W207-XCOBVAL
+     MOVE ZERO   TO D-NUM4N
+     INSPECT W-AIID TALLYING D-NUM4N
+     FOR CHARACTERS BEFORE INITIAL " "
+     MOVE D-NUM4N TO W207-XCOBLEN
      PERFORM L100-ADD-BMP
      IF  ENDE
          EXIT SECTION
      END-IF
+*G.02.07 - Ende
 
 **  ---> BMP39  ACODE
      MOVE 39    TO W207-XBMP
@@ -3387,13 +3418,20 @@
      MOVE 0410 TO W207-NTYPE
 
 **  ---> BMP 33: WEAT als AS-ID
+*G.02.07 - Die AIID soll als AS-ID an die Terminals gesendet werden
      MOVE 33       TO W207-XBMP
-     MOVE "740000" TO W207-XCOBVAL
-     MOVE 6        TO W207-XCOBLEN
+*     MOVE "740000" TO W207-XCOBVAL
+*     MOVE 6        TO W207-XCOBLEN
+     MOVE W-AIID TO W207-XCOBVAL
+     MOVE ZERO   TO D-NUM4N
+     INSPECT W-AIID TALLYING D-NUM4N
+     FOR CHARACTERS BEFORE INITIAL " "
+     MOVE D-NUM4N TO W207-XCOBLEN
      PERFORM L100-ADD-BMP
      IF  ENDE
          EXIT SECTION
      END-IF
+*G.02.07 - Ende
 
 **  ---> BMP39  ACODE
      MOVE 39    TO W207-XBMP
@@ -3585,10 +3623,10 @@
       MOVE W-TERMNR (7:2)  TO        PNR        OF ASYNC70
       MOVE W-TERMNR        TO        TERMNR     OF ASYNC70
       MOVE W-TRACENR       TO        TRACENR    OF ASYNC70
-*G.01.XX - auch Wdh. NTYPE reinmoven
+*G.02.03 - auch Wdh. NTYPE reinmoven
 *      MOVE 400             TO        ISONTYP    OF ASYNC70
       MOVE W-NTYPE         TO        ISONTYP    OF ASYNC70
-*G.01.XX - Ende
+*G.02.03 - Ende
       MOVE W-MDNR          TO        MDNR       OF ASYNC70
       MOVE W-TSNR          TO        TSNR       OF ASYNC70
       MOVE "FK"            TO        VKZ        OF ASYNC70
@@ -3728,12 +3766,18 @@
 *G.06.17 - Ende
 
      MOVE W-LTGIND       TO LTGIND         OF TXILOG70
-     MOVE 740000         TO ASID           OF TXILOG70
+*G.02.06
+*     MOVE 740000         TO ASID           OF TXILOG70
+     MOVE W-AIID         TO ASID           OF TXILOG70
+*G.02.06 ende
      MOVE 9999           TO AC-AS          OF TXILOG70
      MOVE W-AC           TO AC-TERM        OF TXILOG70
      MOVE WKZ-WKZ-A      TO WKZ            OF TXILOG70
      MOVE 70             TO LOGPROT        OF TXILOG70
-     MOVE "S"            TO KZ-BEARB       OF TXILOG70
+*G.02.07 - "L" für Stornos über Nachbucher
+*     MOVE "S"            TO KZ-BEARB       OF TXILOG70
+     MOVE "L"            TO KZ-BEARB       OF TXILOG70
+*G.02.07 - Ende
 
 *G.01.12 - neue KZ-VERF fuer Chip
 *G.00.16 - Anfang - Sonst fuktioniert =UMSWEAT bei man. Storno nicht
@@ -5075,8 +5119,8 @@
      .
  S950-99.
      EXIT.
-     
-     
+
+
 ******************************************************************
 * Select auf neue AIID-Tabelle
 *G.02.02 - neu
@@ -5093,8 +5137,8 @@
              ,:CARDID    OF KEYNAMEN
          BROWSE ACCESS
      END-EXEC
-     
-     
+
+
      IF SQLCODE OF SQLCA = 100
          EXEC SQL
              SELECT AIID
@@ -5106,7 +5150,7 @@
              BROWSE ACCESS
          END-EXEC
      END-IF
-     
+
      EVALUATE SQLCODE OF SQLCA
         WHEN 0      CONTINUE
 ** ---> Dummy AIID, fuer RoutKZ, die nicht gepflegt sind

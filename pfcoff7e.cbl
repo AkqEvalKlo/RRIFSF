@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2018-12-12
-* Letzte Version   :: G.07.03
+* Letzte Aenderung :: 2019-02-12
+* Letzte Version   :: G.07.06
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -66,21 +66,32 @@
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
 *-------|----------|-----|-------------------------------------------*
-*G.07.03|2018-12-12| kus | F1ICC-138:
+*G.07.06|2019-02-12| kus | R7-469:
+*       |          |     | - Isontyp mit abfragen
+*-------|----------|-----|-------------------------------------------*
+*G.07.05|2019-02-05| kus | R7-469:
+*       |          |     | - Doubletten Handling verbessert
+*-------|----------|-----|-------------------------------------------*
+*G.07.04|2018-12-14| kus | F1ICC-138:
 *       |          |     | - Keine AS Nachricht an MICA/TOTAL AS
 *       |          |     |   UMSWEAT Eintrag trotzdem und AC 0 
 *       |          |     |   an Terminal
+*       |          |     | R7-437:
+*       |          |     | - keine VUNR Sonderlocke für BP
+*-------|----------|-----|-------------------------------------------*
+*G.07.03|2018-11-05| das | R7-426:
+*       |          |     | - Keine VUNR Sonderlocke für ENI
 *-------|----------|-----|-------------------------------------------*
 *G.07.02|2018-10-05| kus | DKVCHIP-23:
-*       |          |     | - Erfassungsart 7 kontaktlos wie Chip 
+*       |          |     | - Erfassungsart 7 kontaktlos wie Chip
 *       |          |     | DKVCHIP-24:
-*       |          |     | - Bei Offlinern mit Chip Erfassung 
+*       |          |     | - Bei Offlinern mit Chip Erfassung
 *       |          |     |   BMP 2 und 14 in TS-Anfrage
 *       |          |     | - G.03.03 zurück genommen
 *       |          |     | R7-409:
 *       |          |     | - bei nicht gekennzeichneten Wiederholern
 *       |          |     |   kein insert/update mehr
-*       |          |     |   -> Änderung aus G.03.00 rückgängig 
+*       |          |     |   -> Änderung aus G.03.00 rückgängig
 *       |          |     | - wenn Term/Trace bereits in TXILOG70
 *       |          |     |   jetzt AC 81 und kein Logging
 *       |          |     | DKVCHIP-26:
@@ -608,7 +619,7 @@
      05      TXNLOG70-FLAG       PIC 9       VALUE ZEROS.
           88 TXNLOG70-OK                     VALUE ZEROS.
           88 TXNLOG70-NOK                    VALUE 1.
-          
+
 *G.07.02 - kein Update mehr bei bereits vorhandenen, Änderung G.03.00 rückgängig
 **G.03.00 - Anfang
 *     05      DUPLICATE-KEY       PIC 9       VALUE ZEROS.
@@ -658,6 +669,11 @@
           88 PRF-FEP                       VALUE 2.
 *kl20160906 - G.06.08 - Ende
 
+*G.07.05 - Doubletten Schalter
+     05      DOUBLETTEN-FLAG     PIC 9     VALUE 0.
+          88 SW-DOUBLETTE                  VALUE 1.
+*G.07.05 - Ende
+
 *--------------------------------------------------------------------*
 * weitere Arbeitsfelder
 *--------------------------------------------------------------------*
@@ -674,10 +690,10 @@
      05      W-BMP55-LEN         PIC S9(04)    COMP VALUE ZEROS.
      05      W18-BETRAG          PIC S9(16)V99 COMP VALUE ZEROS.
      05      W-BMP07             PIC 9(10)          VALUE ZEROS.
-*G.07.01 - AIID 
+*G.07.01 - AIID
      05      W-AIID              PIC X(11).
 *G.07.01 - Ende
-     
+
 *G.06.18
 *     05      W-ZP-VERKAUF        PIC S9(18)    COMP VALUE ZEROS.
      05      W-STACKVAL          PIC X(50)         VALUE SPACES.
@@ -887,7 +903,7 @@
 *G.06.38 - Roadrunner neu
           88 VERF-RR                         VALUE 25.
 *G.06.38 - Ende
-          
+
 **  Verfahrensfestlegung für Artikelmapper
 **  AG, AV und TN sind gleich (werden wie AG behandelt)
  01          AS-VERF             PIC X(02).
@@ -911,7 +927,7 @@
 *G.06.31 - Ende
 *G.06.38 - Roadrunner neu
           88 AS-VERF-RR                      VALUE "RR".
-*G.06.38 - Ende          
+*G.06.38 - Ende
           88 AS-VERF-DEFAULT                 VALUE "AG".
 
 **          ---> Parametertabelle für Autorisierungssystem
@@ -1213,7 +1229,7 @@
  EXEC SQL
     INVOKE =UMSWEAT  AS UMSWEAT
  END-EXEC
- 
+
 *G.07.01 - neue Tabelle für AIID
  EXEC SQL
     INVOKE =FCAIID AS FCAIID
@@ -1381,7 +1397,7 @@
 *     IF  PRG-ABBRUCH
 *         EXIT SECTION
 *     END-IF
-     
+
 **  ---> holen Parameter AS-VERF
      MOVE "AS-VERF" TO STUP-PORTION
      PERFORM P950-GETPARAMTEXT
@@ -1396,8 +1412,8 @@
 *                                       W-ROUTKZ
                                        S-ROUTKZ
 ***                                    ---> für Artikelmapper
-*                                       VERF-ROUTKZ     
-*G.07.01 - Ende            
+*                                       VERF-ROUTKZ
+*G.07.01 - Ende
 
 **  ---> Anwendung setzen für Artikelmapper
 **  ---> (die auf Kommentar gesetzten sind default (AG))
@@ -1513,7 +1529,7 @@
          PERFORM P900-WTHEX
          MOVE P-HEX8 (1:1) TO TK-HEXISO (C4-I1)
          MOVE P-HEX8 (2:1) TO TK-HEXISO (C4-I1) (2:1)
-         
+
          PERFORM S960-SELECT-AIID
          MOVE AIID OF FCAIID TO TK-AIID(C4-I1)
 
@@ -1621,7 +1637,7 @@
      MOVE IMSG-MONNAME TO W-FRE-MONNAME
      MOVE IMSG-DATLEN  TO W-FRE-DATLEN
 *G.07.01 - ROUTKZ von Drehscheibe + Laden Schluessel
-     MOVE IMSG-ROUTKZ  TO W-ROUTKZ   
+     MOVE IMSG-ROUTKZ  TO W-ROUTKZ
 *G.07.01 - Ende
 
 **  ---> Kontrolle der Anfrage <---
@@ -1671,12 +1687,12 @@
 *
 *G.06.03 - Ende
 
-*G.07.03 - Für TOTAL/MICA R7 Offliner nie beauftragt, trotzdem AC 0 -> Umsatz Eintrag
+*G.07.04 - Für TOTAL/MICA R7 Offliner nie beauftragt, trotzdem AC 0 -> Umsatz Eintrag
 *          dafür Prüfort auf FEP stellen, dadurch keine AS-Anfrage aber Rest wie normale Trx
      IF W-ROUTKZ = 10
         SET PRF-FEP TO TRUE     
      END-IF
-*G.07.03 - Ende
+*G.07.04 - Ende
 
 *kl20160906 - G.06.08 - Bei FEP-Verarbeitung entfällt der komplette
 *                       AS-Anteil; Nur Eigenantwort mit AC = 0 + Logging
@@ -1842,7 +1858,7 @@
      MOVE IMSG-NTYPE    TO W-NTYPE
 *G.02.02 - Ende
 
-**  ---> zunächst mal den MAC prüfen, sofern vorhanden
+**  ---> zunächst mal den MAC prüfen, sofern vorhanden 
      SET MAC-NO TO TRUE
      IF  IMSG-TBMP(64) = 1
          SET MAC-YES TO TRUE
@@ -1876,7 +1892,7 @@
      END-IF
 
 *G.02.02 - Anfang
-**  ---> Nachrichtentyp bestimmen (Buchung)
+**  ---> Nachrichtentyp bestimmen (Buchung) 
 *    MOVE IMSG-NTYPE    TO W-NTYPE
 *G.02.02 - Ende
 
@@ -1884,7 +1900,7 @@
 *G.07.02 - Pruefen, ob Nachricht mit Term/Trace bereits vorhanden
      PERFORM S182-CHECK-TXILOG70
      IF W-AC > ZERO OR ENDE
-         EXIT SECTION 
+         EXIT SECTION
      END-IF
 *G.07.02 - Ende
 
@@ -2016,7 +2032,7 @@
              PERFORM Z002-PROGERR
              EXIT SECTION
          END-IF
-         
+
 *G.07.02 - Chip hat kein BMP 55
 *G.06.20 - Pruefung, ob Chipdaten, bei BMP35
          IF IMSG-TBMP(55) = 1
@@ -2050,7 +2066,7 @@
 *                 MOVE "BMP 2, 14 und BMP 55 nicht korrekt@" TO DATEN-BUFFER2
 *                 PERFORM Z002-PROGERR
 *                 EXIT SECTION
-             ELSE 
+             ELSE
                 SET ERF-MANUELL TO TRUE
              END-IF
 *G.06.20 - Ende
@@ -2325,7 +2341,7 @@
      END-IF
      PERFORM U400-INTERPRET-ABWEICHUNG
      MOVE W-BUFFER     TO W207-XCOBVAL
-*G.07.02 - Ende 
+*G.07.02 - Ende
      EVALUATE TRUE
          WHEN W-ERF-MANUELL      MOVE "6" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-MAGNET       MOVE "2" TO W207-XCOBVAL (7:1)
@@ -2394,13 +2410,13 @@
 *     MOVE 32           TO W207-XBMP
 *     MOVE W-BUFFER-LEN TO W207-XCOBLEN
 *     MOVE W-BUFFER     TO W207-XCOBVAL
-     
+
      MOVE 32     TO W207-XBMP
      MOVE W-AIID TO W207-XCOBVAL
      MOVE ZERO TO D-NUM4N
      INSPECT W-AIID TALLYING D-NUM4N
      FOR CHARACTERS BEFORE INITIAL " "
-     MOVE D-NUM4N TO W207-XCOBLEN 
+     MOVE D-NUM4N TO W207-XCOBLEN
 *G.07.01 - Ende
      PERFORM L100-ADD-BMP
      IF  ENDE
@@ -2784,17 +2800,20 @@
  C500-00.
 *G.07.02 - bei W-AC 81 kein Logging, derzeit nur fuer den Fall,
 *          dass Term/Trace erneut verwendet wurde
-     IF W-AC = 81 AND TXILOG70-NOK
+*G.07.05 - jetzt mit Schalter
+*     IF W-AC = 81 AND TXILOG70-NOK
+     IF SW-DOUBLETTE
+*G.07.05 - Ende
         EXIT SECTION
      END-IF
 *G.07.02 - Ende
- 
+
 **  ---> Führungstabelle =TXILOG70
      PERFORM G100-PUT-TXILOG70
 
 **  ---> Anfragenachricht für Tabelle =TXNLOG70 TS-Nachrichten
      PERFORM G110-PUT-TXNLOG70-TS
-            
+
 *G.02.01 - Anfang
 ***  ---> nun UMSWEAT bedienen
 *    PERFORM G130-PUT-UMSWEAT
@@ -3173,30 +3192,32 @@
          EXIT SECTION
      END-IF
 
-**  ---> BMP 42 - VUNR wird hier überschrieben
-     MOVE 42 TO S-BMP
-     MOVE 1  TO S-LFDNR
-     PERFORM U300-SEARCH-TAB
-     IF  PRM-NOT-FOUND
-         PERFORM E900-PUT-ERRLOG
-         SET ENDE TO TRUE
-         EXIT SECTION
-     END-IF
-
-     PERFORM U400-INTERPRET-ABWEICHUNG
-     MOVE 42           TO W207-XBMP
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     MOVE W-MDNR (7:2) TO W207-XCOBVAL (W207-XCOBLEN + 1:2)
-*kl20160715 - G.01.05 - So nicht, 1 + 2 = 3 und nicht 9!
-*     MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 9:8)
-     MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 3:8)
-*kl20160715 - G.01.05 - Ende
-     ADD 10 TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+*G.07.04 - Sonderlocke ausbauen
+***  ---> BMP 42 - VUNR wird hier überschrieben
+*     MOVE 42 TO S-BMP
+*     MOVE 1  TO S-LFDNR
+*     PERFORM U300-SEARCH-TAB
+*     IF  PRM-NOT-FOUND
+*         PERFORM E900-PUT-ERRLOG
+*         SET ENDE TO TRUE
+*         EXIT SECTION
+*     END-IF
+*
+*     PERFORM U400-INTERPRET-ABWEICHUNG
+*     MOVE 42           TO W207-XBMP
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     MOVE W-MDNR (7:2) TO W207-XCOBVAL (W207-XCOBLEN + 1:2)
+**kl20160715 - G.01.05 - So nicht, 1 + 2 = 3 und nicht 9!
+**     MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 9:8)
+*     MOVE W-TSNR       TO W207-XCOBVAL (W207-XCOBLEN + 3:8)
+**kl20160715 - G.01.05 - Ende
+*     ADD 10 TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+*G.07.04 - Ende
 
 *kl20150715 - G.01.05 - BMP 48 Mandatory bei BP, wurde vergessen
      PERFORM E310-BMP48-DEFAULT
@@ -3227,31 +3248,34 @@
      END-IF
 *G.06.17 - Ende
 
+
+*G.07.03
 **  ---> BMP 42 muss hier nochmal überarbeitet werden
-     MOVE "3280"  TO W-BUFFER
-     MOVE 4      TO W-BUFFER-LEN
-
+*     MOVE "3280"  TO W-BUFFER
+*     MOVE 4      TO W-BUFFER-LEN
+*
 **  ---> und nun der helle Wahnsinn !!!  lt. Kay für erfolgreiche Tests
-     IF  W-MDNR = 99 and W-TSNR = 1
-         MOVE 1154 TO W-KONV-TSNR
-     ELSE
-         MOVE W-TSNR TO W-KONV-TSNR
-     END-IF
-
+*     IF  W-MDNR = 99 and W-TSNR = 1
+*         MOVE 1154 TO W-KONV-TSNR
+*     ELSE
+*         MOVE W-TSNR TO W-KONV-TSNR
+*     END-IF
+*
 **  ---> führende Nullen entfernen
-     MOVE ZERO TO C4-PTR
-     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
-     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
-         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
-     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
-
-     MOVE 42           TO W207-XBMP
-     MOVE W-BUFFER     TO W207-XCOBVAL
-     MOVE W-BUFFER-LEN TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
-     END-IF
+*     MOVE ZERO TO C4-PTR
+*     INSPECT W-KONV-TSNR-STR TALLYING C4-PTR for LEADING SPACES
+*     MOVE W-KONV-TSNR-STR (C4-PTR + 1:8 - C4-PTR)
+*         TO W-BUFFER (W-BUFFER-LEN + 1:8 - C4-PTR)
+*     COMPUTE W-BUFFER-LEN = W-BUFFER-LEN + 8 - C4-PTR
+*
+*     MOVE 42           TO W207-XBMP
+*     MOVE W-BUFFER     TO W207-XCOBVAL
+*     MOVE W-BUFFER-LEN TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+*G.07.03 Ende
 
 **  ---> und BMP48 aufbereiten
      PERFORM E310-BMP48-DEFAULT
@@ -3366,7 +3390,7 @@
 
 *G.06.40 - BMP 48 ueber DEFAULT-Routine abzuwickeln
      PERFORM E310-BMP48-DEFAULT
-     
+
 ***  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
 ***  --->          noch Fahrerdaten, die einzustellen sind (48.8))
 ***  --->          !!! bei TND/Avia allerdings nicht !!!
@@ -3847,7 +3871,7 @@
 *G.03.03 - Ende
 
      END-EVALUATE
-     
+
 *G.07.02 - Prüfung nicht notwendig
 *G.03.03 - Anfang
 **    Prüfung auf TAG 5F34 (Kartenfolgenummer)
@@ -5853,43 +5877,126 @@
 ******************************************************************
 * Pruefen, ob Trx mit Term/Trace bereits in TXILOG70
 *G.07.02 - neu
+*G.07.05 - Anpassung der Prüfung, um ggf. Offl Wdh. zu beantworten
+*G.07.06 - ISONTYP auch
 ******************************************************************
  S182-CHECK-TXILOG70 SECTION.
  S182-00.
      MOVE W-TERMNR (7:2) TO PNR     OF TXILOG70-CHK
      MOVE W-TERMNR       TO TERMNR  OF TXILOG70-CHK
      MOVE W-TRACENR      TO TRACENR OF TXILOG70-CHK
+     MOVE W-NTYPE        TO ISONTYP OF TXILOG70-CHK
      EXEC SQL
-         SELECT PNR,TERMNR,TRACENR
+         SELECT PNR,TERMNR,TRACENR, BETRAG, GENNR, AC_TERM
            INTO  :PNR    OF TXILOG70-CHK
                 ,:TERMNR OF TXILOG70-CHK
                 ,:TRACENR OF TXILOG70-CHK
+                ,:BETRAG OF TXILOG70-CHK
+                ,:GENNR OF TXILOG70-CHK
+                ,:AC-TERM OF TXILOG70-CHK
            FROM  =TXILOG70
-           WHERE PNR,TERMNR,TRACENR =
+           WHERE PNR,TERMNR,TRACENR, ISONTYP =
                  :PNR     OF TXILOG70-CHK
                 ,:TERMNR  OF TXILOG70-CHK
                 ,:TRACENR OF TXILOG70-CHK
+                ,:ISONTYP OF TXILOG70-CHK
      END-EXEC
+
      
-     EVALUATE SQLCODE OF SQLCA
-         WHEN ZERO   MOVE 81          TO W-AC
-                     SET TXILOG70-NOK TO TRUE
-                     MOVE "nicht gekennzeichnete Offl. Wiederholung - AC 81"
-                                      TO DATEN-BUFFER1
-                     PERFORM Z002-PROGERR
-         WHEN 100    CONTINUE
-         WHEN OTHER  SET TXILOG70-NOK TO TRUE
-                     SET ENDE TO TRUE
-                     MOVE 2005 TO ERROR-NR of GEN-ERROR
-                     STRING  "TXILOG70@"
-                             PNR     of TXILOG70-CHK "/"
-                             TERMNR  of TXILOG70-CHK "/"
-                             TRACENR of TXILOG70-CHK "/"
-                                 delimited by size
-                       INTO DATEN-BUFFER1
-                     END-STRING
-                     PERFORM Z002-PROGERR
-     END-EVALUATE
+*    Wenn nicht gefunden - soweit ok
+     IF SQLCODE OF SQLCA = 100
+        EXIT SECTION
+     END-IF
+
+     SET SW-DOUBLETTE TO TRUE
+
+*    Jetzt mit Daten aus TX  vergleichen
+     IF  IMSG-CF(IMSG-TPTR(4):IMSG-TLEN(4)) NUMERIC
+         MOVE IMSG-CF (IMSG-TPTR(4):IMSG-TLEN(4)) TO W-BETRAG
+         COMPUTE BETRAG OF TXILOG70 = W-BETRAG / 100
+     END-IF
+
+*    Mögliche telef. Gennr übertragen
+     IF IMSG-TBMP(59) = "1"
+        MOVE IMSG-CF(IMSG-TPTR(59):IMSG-TLEN(59))
+                          TO  GENNR    OF TXILOG70
+     END-IF
+     
+     
+*    GENNR ist nur bei ONLINE belegt -
+     IF BETRAG       OF TXILOG70-CHK  = BETRAG       OF TXILOG70 AND
+        KANR         OF TXILOG70-CHK  = KANR         OF TXILOG70 AND
+        GENNR        OF TXILOG70-CHK  = GENNR        OF TXILOG70
+*       scheint sich dann um gleiche TX mit Wiederholung zu handeln, deshalb
+*       AC = 00 , wenn bis hier 00 war - aber keine Speicherung
+        MOVE    "DOUBLETTE IN TXILOG70 "
+                   TO DATEN-BUFFER1
+        STRING   "TERMNR: "
+                 W-TERMNR
+                 " ,TRACENR: "
+                 W-TRACENR
+                     DELIMITED BY SIZE
+             INTO DATEN-BUFFER2
+        END-STRING
+        STRING "BETRAG,"
+                  " KANR, "
+                  " GENNR  "
+                  "sind identisch"
+                   DELIMITED BY SIZE
+             INTO DATEN-BUFFER3
+        END-STRING
+        MOVE AC-TERM OF TXILOG70-CHK (1:2) TO W-AC
+        MOVE "TX mit AC aus Erst-Nachricht beantwortet - kein Update auf TX-Daten"  TO DATEN-BUFFER4
+        PERFORM Z002-PROGERR
+        EXIT SECTION
+     ELSE
+        MOVE ZERO TO ERROR-NR OF GEN-ERROR
+        MOVE    "DOUBLETTE IN TXILOG70 - Daten nicht identisch"
+                   TO DATEN-BUFFER1
+        STRING   "TERMNR: "
+                 W-TERMNR
+                 " ,TRACENR: "
+                 W-TRACENR
+                     DELIMITED BY SIZE
+             INTO DATEN-BUFFER2
+        END-STRING
+        STRING "BETRAG,"
+                  " KANR, "
+                  " GENNR  "
+                  "nicht identisch"
+                   DELIMITED BY SIZE
+             INTO DATEN-BUFFER3
+        END-STRING
+        MOVE "TX mit AC 81 abgelehnt - siehe TRACELOG"  TO DATEN-BUFFER4
+        PERFORM Z002-PROGERR
+     END-IF
+
+*    Generell mit  AC 81 ablehnen - kein Überschreiben -
+*    kein Löschen in UMSWEAT
+     MOVE 81         TO W-AC
+     MOVE "*"        TO IMSG-TRACETERMID
+
+     
+*     EVALUATE SQLCODE OF SQLCA
+*         WHEN ZERO   MOVE 81          TO W-AC
+*                     SET TXILOG70-NOK TO TRUE
+*                     MOVE "nicht gekennzeichnete Offl. Wiederholung - AC 81"
+*                                      TO DATEN-BUFFER1
+*                     PERFORM Z002-PROGERR
+*         WHEN 100    CONTINUE
+*         WHEN OTHER  SET TXILOG70-NOK TO TRUE
+*                     SET ENDE TO TRUE
+*                     MOVE 2005 TO ERROR-NR of GEN-ERROR
+*                     STRING  "TXILOG70@"
+*                             PNR     of TXILOG70-CHK "/"
+*                             TERMNR  of TXILOG70-CHK "/"
+*                             TRACENR of TXILOG70-CHK "/"
+*                                 delimited by size
+*                       INTO DATEN-BUFFER1
+*                     END-STRING
+*                     PERFORM Z002-PROGERR
+*     END-EVALUATE
+*G.07.05 - Ende
      .
  S182-99.
      EXIT.
@@ -6165,7 +6272,7 @@
      .
  S950-99.
      EXIT.
-     
+
 ******************************************************************
 * Select auf neue AIID-Tabelle
 *G.07.01 - neu
@@ -6182,8 +6289,8 @@
              ,:CARDID    OF KEYNAMEN
          BROWSE ACCESS
      END-EXEC
-     
-     
+
+
      IF SQLCODE OF SQLCA = 100
          EXEC SQL
              SELECT AIID
@@ -6195,7 +6302,7 @@
              BROWSE ACCESS
          END-EXEC
      END-IF
-     
+
      EVALUATE SQLCODE OF SQLCA
         WHEN 0      CONTINUE
 ** ---> Dummy AIID, fuer RoutKZ, die nicht gepflegt sind
@@ -6217,7 +6324,7 @@
      .
  S960-99.
      EXIT.
-     
+
 ******************************************************************
 * Transaktionsbegrenzungen
 ******************************************************************
