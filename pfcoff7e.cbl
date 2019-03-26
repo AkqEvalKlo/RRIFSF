@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2019-02-12
-* Letzte Version   :: G.07.06
+* Letzte Aenderung :: 2019-03-25
+* Letzte Version   :: G.07.08
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -66,6 +66,13 @@
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
 *-------|----------|-----|-------------------------------------------*
+*G.07.08|2019-03-25| kus | E100-7:
+*       |          |     | - Umsetzung E100
+*       |          |     | F1ICC-154:
+*       |          |     | - Shell BMP 59 auf 16 Stellen
+*-------|----------|-----|-------------------------------------------*
+*G.07.07|2019-02-13| sk  | R7-468: richtige ASID in TXILOG70 speichern
+*-------|----------|-----|-------------------------------------------*
 *G.07.06|2019-02-12| kus | R7-469:
 *       |          |     | - Isontyp mit abfragen
 *-------|----------|-----|-------------------------------------------*
@@ -74,7 +81,7 @@
 *-------|----------|-----|-------------------------------------------*
 *G.07.04|2018-12-14| kus | F1ICC-138:
 *       |          |     | - Keine AS Nachricht an MICA/TOTAL AS
-*       |          |     |   UMSWEAT Eintrag trotzdem und AC 0 
+*       |          |     |   UMSWEAT Eintrag trotzdem und AC 0
 *       |          |     |   an Terminal
 *       |          |     | R7-437:
 *       |          |     | - keine VUNR Sonderlocke für BP
@@ -1690,7 +1697,7 @@
 *G.07.04 - Für TOTAL/MICA R7 Offliner nie beauftragt, trotzdem AC 0 -> Umsatz Eintrag
 *          dafür Prüfort auf FEP stellen, dadurch keine AS-Anfrage aber Rest wie normale Trx
      IF W-ROUTKZ = 10
-        SET PRF-FEP TO TRUE     
+        SET PRF-FEP TO TRUE
      END-IF
 *G.07.04 - Ende
 
@@ -1858,7 +1865,7 @@
      MOVE IMSG-NTYPE    TO W-NTYPE
 *G.02.02 - Ende
 
-**  ---> zunächst mal den MAC prüfen, sofern vorhanden 
+**  ---> zunächst mal den MAC prüfen, sofern vorhanden
      SET MAC-NO TO TRUE
      IF  IMSG-TBMP(64) = 1
          SET MAC-YES TO TRUE
@@ -1892,7 +1899,7 @@
      END-IF
 
 *G.02.02 - Anfang
-**  ---> Nachrichtentyp bestimmen (Buchung) 
+**  ---> Nachrichtentyp bestimmen (Buchung)
 *    MOVE IMSG-NTYPE    TO W-NTYPE
 *G.02.02 - Ende
 
@@ -4438,7 +4445,10 @@
      END-IF
 *kl20160906 - G.06.08 - Ende
      MOVE W-LTGIND       TO LTGIND         of TXILOG70
-     MOVE 740000         TO ASID           of TXILOG70
+*G.07.07
+*     MOVE 740000         TO ASID           of TXILOG70
+     MOVE W-AIID         TO ASID           of TXILOG70
+*G.07.07
      MOVE 9999           TO AC-AS          of TXILOG70
      MOVE W-AC           TO AC-TERM        of TXILOG70
 
@@ -5902,7 +5912,7 @@
                 ,:ISONTYP OF TXILOG70-CHK
      END-EXEC
 
-     
+
 *    Wenn nicht gefunden - soweit ok
      IF SQLCODE OF SQLCA = 100
         EXIT SECTION
@@ -5921,8 +5931,8 @@
         MOVE IMSG-CF(IMSG-TPTR(59):IMSG-TLEN(59))
                           TO  GENNR    OF TXILOG70
      END-IF
-     
-     
+
+
 *    GENNR ist nur bei ONLINE belegt -
      IF BETRAG       OF TXILOG70-CHK  = BETRAG       OF TXILOG70 AND
         KANR         OF TXILOG70-CHK  = KANR         OF TXILOG70 AND
@@ -5976,7 +5986,7 @@
      MOVE 81         TO W-AC
      MOVE "*"        TO IMSG-TRACETERMID
 
-     
+
 *     EVALUATE SQLCODE OF SQLCA
 *         WHEN ZERO   MOVE 81          TO W-AC
 *                     SET TXILOG70-NOK TO TRUE

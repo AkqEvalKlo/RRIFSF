@@ -5,7 +5,6 @@
 ?SEARCH  =EBC2ASC
 ?SEARCH  =IUMSW07
 ?SEARCH  =SDBCDU5
-*?SEARCH  =SYSABL1
 ?SEARCH  =SYSMK7I
 ?SEARCH  =WCAPM92
 ?SEARCH  =WISO107
@@ -17,12 +16,9 @@
 ?SEARCH  =WSYS971
 ?SEARCH  =WSYS980
 ?SEARCH  =WSYS990
-
-*G.01.16 - Anfang
 ?SEARCH  =WCSI060
 ?SEARCH  =WEUR055
 ?SEARCH  =WEUR056
-*G.01.16 - Ende
 
 ?NOLMAP, SYMBOLS, INSPECT
 ?SAVE ALL
@@ -41,8 +37,8 @@
 
 
 *****************************************************************
-* Letzte Aenderung :: 2018-11-19
-* Letzte Version   :: G.02.02
+* Letzte Aenderung :: 2019-03-20
+* Letzte Version   :: G.02.03
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -50,12 +46,14 @@
 * Kurzbeschreibung :: auf Termial-Nachrichten vom Typ 210 umgesetzt
 * Kurzbeschreibung :: werden.
 * Package          :: ICC
-* Auftrag          :: R7-376
 *
 * Aenderungen
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar
+*-------|----------|-----|-------------------------------------------*
+*G.02.03|2019-03-20| kus | E100-4:
+*       |          |     | - Umsetzung E100
 *-------|----------|-----|-------------------------------------------*
 *G.02.02|2018-11-19| kus | DKVCHIP-25:
 *       |          |     | - BMP 55 ggf. vom AS an TS weiterleiten
@@ -293,10 +291,7 @@
 *
 * F910-MAC-PRUEFEN
 * F920-MAC-BILDEN
-*
-*G.01.14 - Anfang
 * F915-ASMAC-DUKPT
-*G.01.14 - Ende
 *
 * G100-PUT-TXILOG70
 * G110-PUT-TXNLOG70-TS
@@ -456,15 +451,9 @@
 
 **          ---> Pflichtfelder einer 210-TS-Nachricht
      05      K-BYTEMAP-A210      PIC X(64) VALUE
-*G.01.01 - Anfang
-*    "0011000000111000000000001000000010000010100000001000000000000000".
-**
      "0011000000111000000000000000000010000010100000001000000000000000".
-*G.01.01 - Ende
 **             1         2         3         4         5         6
 **    1234567890123456789012345678901234567890123456789012345678901234
-
-*G.01.01 - Ende
 
 *----------------------------------------------------------------*
 * Conditional-Felder
@@ -507,12 +496,6 @@
           88 KEYNAMEN-OK                     VALUE ZERO.
           88 KEYNAMEN-EOD                    VALUE 1.
           88 KEYNAMEN-NOK                    VALUE 9.
-
-*G.01.35 - Anfang
-*    05      POST70-FLAG         PIC 9       VALUE ZERO.
-*         88 POST70-OK                       VALUE ZERO.
-*         88 POST70-NOK                      VALUE 1.
-*G.01.35 - Ende
 
      05      IFSFAC-FLAG         PIC 9       VALUE ZERO.
           88 IFSFAC-OK                       VALUE ZERO.
@@ -568,21 +551,13 @@
  01          WORK-INIT.
      05      W-CARDID             PIC S9(04) comp.
      05      W-KANR-LEN           PIC S9(04) comp.
-
-*G.01.05 - ANFANG
-*    05      W18-BETRAG           PIC S9(16)V99 comp.
-**
-
      05      W18-BETRAG-AUT       PIC S9(16)V99 comp.
      05      W18-BETRAG-ANGEFRAGT PIC S9(16)V99 comp.
-*G.01.05 - ENDE
-
      05      W-ZP-VERKAUF         PIC S9(18) COMP.
 
      05      W-ACX.
       10     W-AC                PIC 9(02).
 
-*G.01.12 - Anfang
      05      PRF-ACX REDEFINES W-ACX.
       10     PRF-AC              PIC XX.
              88  W-AC-OK         VALUE "00", "10", "A0",
@@ -590,7 +565,6 @@
                                        "A4", "A5", "A6",
                                        "A7", "A8", "A9".
              88  W-AC-UMSATZ-OK  VALUE "00", "10".
-*G.01.12 - Ende
 
      05      W-AC-AS             PIC 9(03).
      05      W-ACQUIRER-ID       PIC X(06).
@@ -753,34 +727,7 @@
      05      MEM-TXILOG70        PIC X(3300).
      05      MEM-TXNLOG70-TS     PIC X(3300).
      05      MEM-TXNLOG70-AS     PIC X(3300).
-
-*kl20180405 - G.01.45 - Sieht gut aus, ist aber hier nicht angebracht
-* 01          T-FCPARAM.
-*kl20180105 - G.03.08 - Tabelle auf 500 Einträge vergroessert
-*     05      T-FCPARAM-TAB    occurs 200.
-*     05      T-FCPARAM-TAB    occurs 1 to 200
-*     05      T-FCPARAM-TAB    occurs 1 to 500
-*kl20180105 - G.03.08 - Ende
-*                             depending on     T-MAX
-*                             ascending key is T-KEY
-*                             indexed by       IND-TAB.
-*      10     T-KEY.
-*       15    T-ROUTKZ            PIC S9(04) COMP VALUE ZEROS.
-*       15    T-CARDID            PIC S9(04) COMP VALUE ZEROS.
-*       15    T-ISONTYP           PIC S9(04) COMP VALUE ZEROS.
-*       15    T-KZ-MSG            PIC  X(02).
-*       15    T-BMP               PIC S9(04) COMP VALUE ZEROS.
-*       15    T-LFDNR             PIC S9(04) COMP VALUE ZEROS.
-*      10     T-KZ-ABWEICHUNG     PIC  X(64).*
-*
-* 01          T-MAX               PIC S9(04) COMP VALUE ZEROS.
-*
-*kl20180105 - G.03.08 - Tabelle auf 500 Einträge vergroessert
-* 01          T-TAB-MAX           PIC S9(04) COMP VALUE 200.
-* 01          T-TAB-MAX           PIC S9(04) COMP VALUE 500.
-*kl20180105 - G.03.08 - Ende
-* 01          T-AKT-IND           PIC S9(04) COMP VALUE ZEROS.
-
+     
 *==> Zurück zur Standardtabellendefinition
  01          T-FCPARAM.
      05      T-FCPARAM-TAB    OCCURS 500.
@@ -817,7 +764,6 @@
      05      S2-KZ-MSG            PIC  X(02).
      05      S2-BMP               PIC S9(04) COMP VALUE ZEROS.
      05      S2-LFDNR             PIC S9(04) COMP VALUE ZEROS.
-*kl20180405 - G.01.45 - Ende
 
 *G.02.01 - Tabelle auf 150 vergroessert
 **          ---> AS-Keytabelle
@@ -845,53 +791,37 @@
 **          ---> hier muss ggf. bei weiteren AS'sen erweitert werden
 *G.02.01 - Refactoring fuer AS-Verfahren
  01          VERF-AS            PIC 9(02) VALUE ZEROS.
-*G.02.01 - Ende
           88 VERF-AG                         VALUE 15.
           88 VERF-AV                         VALUE 05.
           88 VERF-BP                         VALUE 14.
           88 VERF-DK                         VALUE 12.
-*G.01.11 - Anfang
           88 VERF-EU                         VALUE 22.
-*G.01.11 - Ende
-
-*G.01.40 - Anfang
           88 VERF-IQ                         VALUE 24.
-*G.01.40 - Ende
-
-*G.01.13 - Anfang
           88 VERF-LO                         VALUE 23.
-*G.01.13 - Ende
           88 VERF-NF                         VALUE 99.
           88 VERF-OR                         VALUE 16.
           88 VERF-SH                         VALUE 07.
           88 VERF-TN                         VALUE 18.
           88 VERF-TO                         VALUE 10.
           88 VERF-UT                         VALUE 17.
-*G.01.46 - Roadrunner neu
           88 VERF-RR                         VALUE 25.
-*G.01.46 - Ende
+*G.02.03 -  E100 neu
+          88 VERF-E1                         VALUE 26.
+*G.02.03 - Ende
 
 **          ---> Verfahrensfestlegung AS-MAC-Berechnung
  01          AS-VERF             PIC X(02).
           88 AS-VERF-DK                      VALUE "DK".
-*G.01.11 - Anfang
           88 AS-VERF-EU                      VALUE "EU".
-*G.01.11 - Ende
-
-*G.01.40 - Anfang
           88 AS-VERF-IQ                      VALUE "IQ".
-*G.01.40 - Ende
-
-*G.01.13 - Anfang
           88 AS-VERF-LO                      VALUE "LO".
-*G.01.13 - Ende
           88 AS-VERF-TO                      VALUE "TO".
           88 AS-VERF-UT                      VALUE "UT".
           88 AS-VERF-TN                      VALUE "TN".
-*G.01.46 - Roadrunner neu
           88 AS-VERF-RR                      VALUE "RR".
-*G.01.46 - Ende
-
+*G.02.03 -  E100 neu
+          88 AS-VERF-E1                      VALUE "E1".
+*G.02.03 - Ende
           88 AS-VERF-DEFAULT                 VALUE "SL".
 
 **          --->
@@ -960,11 +890,6 @@
 **          ---> Schnittstelle zu SDBCDU5
      COPY    SDBCDU0C OF "=MSGLIB"
              REPLACING =="*"== BY ==SDB==.
-*G.01.32 - Anfang
-**          ---> Schnittstelle zu Modul SYSABL1
-*    COPY    SYSABL1C OF "=MSGLIB"
-*            REPLACING =="*"== BY ==TABL==.
-*G.01.32 - Ende
 
 **          ---> Schnittstelle zu SYSMK7I
      COPY    SYSML7IC    OF "=MSGLIB"
@@ -1002,11 +927,9 @@
      COPY    WUMSO07C OF "=MSGLIB"
              REPLACING =="*"== BY ==WUMS==.
 
-*G.10.04 - Anfang
 **          ---> Für Boxen-interface
      COPY    WEUR056C OF  "=MSGLIB"
              REPLACING =="*"== BY ==Z==.
-*G.10.04 - Ende
 
 
 ******************************************************************
@@ -1053,13 +976,6 @@
  EXEC SQL
     INVOKE =KEYNAMEN AS KEYNAMEN
  END-EXEC
-
-*G.01.35 - Anfang
-**  ---> Struktur der Tabelle POST70
-*EXEC SQL
-*   INVOKE =POST70   AS POST70
-*END-EXEC
-*G.01.35 - Ende
 
 **  ---> Struktur der Tabelle TXILOG70
  EXEC SQL
@@ -1118,8 +1034,6 @@
                     ISONTYP         ASC,
                     BMP             ASC,
                     LFDNR           ASC
-*kl20180405 - G.01.45 - Ende
-
          BROWSE  ACCESS
  END-EXEC
 
@@ -1264,17 +1178,14 @@
 
 **  ---> Anwendung setzen für MAC-Berechnung
      EVALUATE TRUE
-
          WHEN VERF-DK    SET AS-VERF-DK TO TRUE
          WHEN VERF-TO    SET AS-VERF-TO TO TRUE
          WHEN VERF-TN    SET AS-VERF-TN TO TRUE
-
-*G.01.42 - Anfang
          WHEN VERF-IQ    SET AS-VERF-DK TO TRUE
-*G.01.42 - Ende
-
+*G.02.03 -  E100 neu
+         WHEN VERF-E1    SET AS-VERF-E1 TO TRUE
+*G.02.03 - Ende
          WHEN OTHER      SET AS-VERF-DEFAULT TO TRUE
-
      END-EVALUATE
 
 **  ---> interne Tabelle initialisieren
@@ -1385,33 +1296,24 @@
          WHEN VERF-AV    MOVE "AV" TO APPL-KZ of IFSFAC
          WHEN VERF-BP    MOVE "BP" TO APPL-KZ of IFSFAC
          WHEN VERF-DK    MOVE "DK" TO APPL-KZ of IFSFAC
-*G.01.11 - Anfang
          WHEN VERF-EU    MOVE "EU" TO APPL-KZ of IFSFAC
-*G.01.11 - Ende
-
-*G.01.40 - Anfang
          WHEN VERF-IQ    MOVE "IQ" TO APPL-KZ of IFSFAC
-*G.01.40 - Ende
-
-*G.01.13 - Anfang
          WHEN VERF-LO    MOVE "LO" TO APPL-KZ of IFSFAC
-*G.01.13 - Ende
          WHEN VERF-OR    MOVE "OR" TO APPL-KZ of IFSFAC
          WHEN VERF-SH    MOVE "SH" TO APPL-KZ of IFSFAC
          WHEN VERF-TN    MOVE "TN" TO APPL-KZ of IFSFAC
          WHEN VERF-TO    MOVE "TO" TO APPL-KZ of IFSFAC
          WHEN VERF-UT    MOVE "UT" TO APPL-KZ of IFSFAC
-*G.01.46 - Roadrunner neu
          WHEN VERF-RR    MOVE "RR" TO APPL-KZ of IFSFAC
-*G.01.46 - Ende
-
+*G.02.03 -  E100 neu
+         WHEN VERF-E1    MOVE "E1" TO APPL-KZ of IFSFAC
+*G.02.03 - Ende
          WHEN OTHER      MOVE "Verfahren für AC-Mapping kann nicht bestimmt werden"
                              TO DATEN-BUFFER1
                          MOVE "Programm wird beendet" TO DATEN-BUFFER2
                          SET ENDE TO TRUE
                          PERFORM Z002-PROGERR
                          EXIT SECTION
-
      END-EVALUATE
 
 **  ---> Terminal AC's initialisieren (alle negativ)
@@ -1505,59 +1407,7 @@
  B090-99.
      EXIT.
 
-*G.01.24 - Anfang
-******************************************************************
-* Verarbeitung
-******************************************************************
-*B100-VERARBEITUNG SECTION.
-*B100-00.
-**  --> Fregat-Angaben merken
-*    MOVE IMSG-TERMID  TO W-FRE-TERMID
-*    MOVE IMSG-MONNAME TO W-FRE-MONNAME
-*    MOVE IMSG-DATLEN  TO W-FRE-DATLEN
-*
-**  ---> erstmal die Nachrichten aus dem Hinweg aus dem MEMLOG holen
-*    PERFORM C050-GET-MEMLOG
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-*
-**  ---> Kontrolle der Antwort <---
-**  ---> ist die Antwort evtl. OK?
-*    PERFORM C100-ANTWORT-CHECK
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-*
-**  ---> für alle AS'sen gültige Transaktions Regeln
-*    PERFORM C200-AS-GENERELL
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-*
-**  ---> spezielle Regeln für AS'sen
-*    PERFORM C300-AS-SPEZIELL
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-*
-**  ---> und hier die TS-Nachricht zusammenbauen
-*    PERFORM C400-BUILD-TS-NACHRICHT
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-*
-**  ---> Schreiben der Log-Daten
-*    PERFORM C500-LOGGING
-*
-**  ---> FREGAT-Parameter setzen
-*    SET  IMSG-WRITE-SL TO TRUE
-*    MOVE IMSG-MONNAME  TO IMSG-NEXTSERV
-*    .
-*B100-99.
-*    EXIT.
-*
-*
+
 ******************************************************************
 * Verarbeitung
 ******************************************************************
@@ -1590,23 +1440,12 @@
 **  ---> spezielle Regeln für AS'sen
       PERFORM C300-AS-SPEZIELL
      END-IF
-*G.01.34 - Anfang
-*kl20170614 - G.01.31 - Der endgültige AC steht erst an dieser Stelle fest!
+
 **  ---> BMP 39 - endgültiger Antwortcode für das Terminal
-
-*G.01.32 - Anfang
-*    IF  W-AC = ZERO
-**      ---> zunächst prüfen, ob ein spez. AC gesendet werden soll
-*        PERFORM M120-CALL-SYSABL1
-*    END-IF
-*G.01.32 - Ende
-
      MOVE 39    TO W207-XBMP
      MOVE 02    TO W207-XCOBLEN
      MOVE W-ACX TO W207-XCOBVAL
      PERFORM L100-ADD-BMP
-*kl20170614 - G.01.31 - Ende
-*G.01.34 - Ende
      IF  ENDE
          CONTINUE
      ELSE
@@ -1645,111 +1484,6 @@
      .
  C000-99.
      EXIT.
-
-*G.01.29 - Anfang
-******************************************************************
-* Holen Daten aus MEMLOG
-******************************************************************
-*C050-GET-MEMLOG SECTION.
-*C050-00.
-**  ---> timeout Parameter setzen (bei -1 Verfahrensdefault "C")
-*    SET MEM-READ TO TRUE
-*    MOVE -1      TO MEM-APP-TIMEOUT
-*    MOVE "B"     TO MEM-VERFKZ
-*    MOVE SPACES  TO MEM-LOGKEY
-*
-**  ---> Logkey setzen: Terminal-Nr., Trace-Nr., NType, AbwKz
-**  ---> holen aus BMP59
-*    IF  IMSG-TBMP(59) = 0 or IMSG-TPTR(59) = 0 or IMSG-TLEN(59) = 0
-*        SET ENDE TO TRUE
-*        EXIT SECTION
-*    END-IF
-*
-**  ---> MEMLOG Key aufbereiten
-*    MOVE IMSG-CF(IMSG-TPTR(59) +  4:8) TO W-TERMNR
-*    MOVE IMSG-CF(IMSG-TPTR(59) + 12:6) TO W-TRACENR
-*    MOVE 200                           TO W-NTYPE
-*    MOVE IMSG-CF(IMSG-TPTR(59) + 18:6) TO W-BMP03
-*
-**  ---> und auch die AbwKz / Beleg-Nr. noch merken
-*    MOVE IMSG-CF(IMSG-TPTR(59) + 18:2) TO W-ABWKZ
-*    MOVE IMSG-CF(IMSG-TPTR(59) + 20:4) TO W-BELEGNR
-*
-*    MOVE W-MEMLOG-KEY TO MEM-LOGKEY
-*    MOVE IMSG-MONNAME TO MEM-ASNAME
-*
-*    if  trace-on
-*        move "Test # - C050-GET-MEMLOG - MEMLOG-Logkey:" to daten-buffer1
-*        move mem-logkey                                  to daten-buffer2
-*        string  "AS-Name: "
-*                mem-asname
-*                    delimited by size
-*          into  daten-buffer3
-*        end-string
-*        perform z002-progerr
-*    end-if
-*
-**  ---> MEMLOG Aufruf
-*    PERFORM M110-CALL-SYSMK7I
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-*
-**  ---> Daten aus MEMLOG in Tabellenstruktur verteilen
-*    MOVE MEM-TXILOG70    TO TXILOG70
-*    MOVE MEM-TXNLOG70-TS TO TXNLOG70-TS
-*    MOVE MEM-TXNLOG70-AS TO TXNLOG70-AS
-*
-**  ---> Daten für Weiterverwendung bereitstellen
-*
-*G.01.06 - Anfang
-*    IF IMSG-MONNAME(4:2) = "SH"
-*       MOVE TERMNR  OF TXILOG70    TO W-TERMNR
-*       MOVE TRACENR OF TXILOG70    TO W-TRACENR
-*       MOVE ISONTYP OF TXILOG70    TO W-NTYPE
-*    END-IF
-*G.01.06 - Ende
-*
-*    MOVE MDNR      of TXILOG70    TO W-MDNR
-*    MOVE TSNR      of TXILOG70    TO W-TSNR
-*
-*G.01.08 - Anfang
-*    MOVE CARDID    of TXILOG70    TO W-CARDID
-*G.01.08 - Ende
-*
-**  ---> Terminal-Nr. für ERRLOG aufbereiten
-*    MOVE TERMNR    of TXILOG70    TO P-HEX16
-*    PERFORM P900-WTHEX
-*    MOVE P-HEX8(1:4) TO TERMID of APPL-SPEC-BUF
-*
-**  ---> TS-Anfrage aufbereiten für Spiegelfelder
-*    MOVE VAL of ANFRAGE of TXNLOG70-TS(1:LEN of ANFRAGE of TXNLOG70-TS)
-*                                       TO W207-ISOSTRING
-*    MOVE LEN of ANFRAGE of TXNLOG70-TS TO W207-ISOLEN
-*    SET  W207-EC TO TRUE
-*    PERFORM L120-ISO2COB
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-**  +++> und Daten in TS-Struktur bereitstellen
-*    MOVE W207-WISO207C TO W2TS-WISO207C
-*
-**  ---> AS-Anfrage aufbereiten für Prüfungen
-*    MOVE VAL of ANFRAGE of TXNLOG70-AS(1:LEN of ANFRAGE of TXNLOG70-AS)
-*                                       TO W207-ISOSTRING
-*    MOVE LEN of ANFRAGE of TXNLOG70-AS TO W207-ISOLEN
-*    SET  W207-IFSF TO TRUE
-*    PERFORM L120-ISO2COB
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-**  +++> und Daten in AS-Struktur bereitstellen
-*    MOVE W207-WISO207C TO W2AS-WISO207C
-*    .
-*C050-99.
-*    EXIT.
-*
-**
 
 ******************************************************************
 * Holen Daten aus MEMLOG
@@ -1856,15 +1590,8 @@
      MOVE W207-WISO207C TO W2TS-WISO207C
 
 **Abwicklungskennzeichen und Belegnr bereitstellen (u.a. fuer UMSWEAT)
-
-*G.01.30 - Anfang
-*    MOVE W2TS-CF(IMSG-TPTR(03):2)        TO W-ABWKZ
-*    MOVE W2TS-CF(IMSG-TPTR(03) + 2:4)    TO W-BELEGNR
-**
-
      MOVE W2TS-CF(W2TS-TPTR(03):2)        TO W-ABWKZ
      MOVE W2TS-CF(W2TS-TPTR(03) + 2:4)    TO W-BELEGNR
-*G.01.30 - Ende
 
 **  ---> AS-Anfrage aufbereiten für Prüfungen
      MOVE VAL OF ANFRAGE OF TXNLOG70-AS(1:LEN of ANFRAGE OF TXNLOG70-AS)
@@ -1880,8 +1607,6 @@
      .
  C050-99.
      EXIT.
-
-*G.01.29 - Ende
 
 ******************************************************************
 * Kontrolle Eingangsnachricht
@@ -1911,12 +1636,10 @@
          EXIT SECTION
      END-IF
 
-*G.01.26 - Anfang - Sicherung wurde vorgezogen
 **  ---> BMP 38 - Autorisierungsmerkmal merken
      IF  IMSG-TBMP(38) = 1
          MOVE IMSG-CF(IMSG-TPTR(38):IMSG-TLEN(38)) TO W-GENNR
      END-IF
-*G.01.26 - Anfang
 
 **  ---> Weitere Prüfungen
 **  ---> Diverse Felder müssen gespiegelt werden
@@ -1928,9 +1651,6 @@
          MOVE "BMP 3 in AS-Antwort <> AS-Anfrage"  TO DATEN-BUFFER1
          MOVE "Transaktion wird mit AC 81 beantwortet" TO DATEN-BUFFER2
          MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*        SET ENDE TO TRUE
-*G.01.24 - Ende
          PERFORM Z002-PROGERR
          EXIT SECTION
      END-IF
@@ -1940,14 +1660,6 @@
 
 **  ---> BMP 4 - Betrag
      IF IMSG-TBMP(4) = 1
-
-*G.01.05 - Anfang
-*       MOVE IMSG-CF(IMSG-TPTR(04):IMSG-TLEN(04))
-*         TO W-BETRAG
-*       COMPUTE W18-BETRAG
-*              = W-BETRAG / 100
-*****
-
         MOVE IMSG-CF(IMSG-TPTR(04):IMSG-TLEN(04))
           TO W-BETRAG
         COMPUTE W18-BETRAG-AUT
@@ -1956,14 +1668,11 @@
           TO W-BETRAG
         COMPUTE W18-BETRAG-ANGEFRAGT
                = W-BETRAG / 100
-*G.01.05 - Ende
 
         EVALUATE W-AC-AS
 **       ---> wenn AC=0, muss gleich sein
             WHEN ZERO
-*G.01.25 - Anfang
                  IF NOT VERF-TO
-
                    IF     IMSG-CF(IMSG-TPTR(4):IMSG-TLEN(4))
                    NOT = W2AS-CF(W2AS-TPTR(4):W2AS-TLEN(4))
                          MOVE "BMP 4 in AS-Antwort <> AS-Anfrage"
@@ -1971,18 +1680,12 @@
                          MOVE "Transaktion wird mit AC 81 beantwortet"
                            TO DATEN-BUFFER2
                          MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*                        SET ENDE TO TRUE
-*G.01.24 - Ende
                          PERFORM Z002-PROGERR
                          EXIT SECTION
                    END-IF
                  END-IF
-*G.01.25 - Ende
 
-*G.01.26 - Anfang
                  IF VERF-TO
-
                    IF    IMSG-CF(IMSG-TPTR(4):IMSG-TLEN(4))
                    NOT = W2AS-CF(W2AS-TPTR(4):W2AS-TLEN(4))
                          MOVE "BMP 4 in AS-Antwort <> AS-Anfrage"
@@ -1994,13 +1697,9 @@
                          EXIT SECTION
                    END-IF
                  END-IF
-*G.01.26 - Ende
-
-*G.01.27 - Anfang
 
 *Wenn BMP55 in AS-Anfrage vorhanden, dann sollte auch die AS-Antwort
 *BMP55 schicken
-
                  IF  W2AS-TBMP(55)     = 1
                  AND IMSG-TBMP(55) NOT = 1
                      MOVE "BMP 55 in AS-Anfrage, aber nicht in AS-Antwort"
@@ -2012,12 +1711,7 @@
                      EXIT SECTION
                  END-IF
 
-*G.01.27 - Ende
 **          ---> bei Teilgenehmigung, muss kleiner gleich oder null sein
-*G.01.05 - ANFANG
-*           WHEN 2
-*                CONTINUE
-**
             WHEN 2
                  IF  IMSG-CF(IMSG-TPTR(4):IMSG-TLEN(4)) > ZEROS
                  AND IMSG-CF(IMSG-TPTR(4):IMSG-TLEN(4))
@@ -2027,13 +1721,9 @@
                      MOVE "Transaktion wird AC 81 beantwortet"
                        TO DATEN-BUFFER2
                      MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*                    SET ENDE TO TRUE
-*G.01.24 - Ende
                      PERFORM Z002-PROGERR
                      EXIT SECTION
                  END-IF
-*G.01.05 - ENDE
 
 **          ---> bei Ablehnung, muss 0 sein
             WHEN OTHER
@@ -2043,9 +1733,6 @@
                      MOVE "Transaktion wird mit AC 81 beantwortet"
                        TO DATEN-BUFFER2
                      MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*                    SET ENDE TO TRUE
-*G.01.24 - Ende
                      PERFORM Z002-PROGERR
                      EXIT SECTION
                  END-IF
@@ -2059,102 +1746,83 @@
          MOVE "BMP 12 in AS-Antwort <> AS-Anfrage" TO DATEN-BUFFER1
          MOVE "Transaktion wird mit AC 81 beantwortet" TO DATEN-BUFFER2
          MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*        SET ENDE TO TRUE
-*G.01.24 - Ende
          PERFORM Z002-PROGERR
          EXIT SECTION
      END-IF
 
+*G.02.03 - E100 sendet kein BMP 30 in 1110
+     IF VERF-E1
+        CONTINUE
+     ELSE
 **  ---> BMP 30 - Ersatzbeträge
-     EVALUATE W-AC-AS
+        EVALUATE W-AC-AS
 **      ---> wenn AC=0, darf nicht da sein
-         WHEN ZERO
-*G.01.25 - Anfang
-           IF  NOT VERF-TO
-              IF IMSG-TBMP(30) = 1
-                 MOVE "Genehmigung mit BMP 30            "
-                   TO DATEN-BUFFER1
-                 MOVE "Transaktion wird mit AC 81 beantwortet"
-                   TO DATEN-BUFFER2
-                 MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*                SET ENDE TO TRUE
-*G.01.24 - Ende
-                 PERFORM Z002-PROGERR
-                 EXIT SECTION
-              END-IF
-           END-IF
-
-*G.01.25 - Ende
-**      ---> bei Teilgenehmigung, muss vorhanden sein
-         WHEN 2
-*G.01.47 - ENI Teilgenehmigung hat kein BMP 30 in Antwort
-           IF NOT VERF-AG
-               IF IMSG-TBMP(30) = 0
-                  MOVE "Teilgenehmigung/Ablehnung ohne BMP 30"
-                    TO DATEN-BUFFER1
-                  MOVE "Transaktion wird mit AC 81 beantwortet"
-                    TO DATEN-BUFFER2
-                  MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*             SET ENDE TO TRUE
-*G.01.24 - Ende
-                  PERFORM Z002-PROGERR
-                  EXIT SECTION
+             WHEN ZERO
+               IF  NOT VERF-TO
+                  IF IMSG-TBMP(30) = 1
+                     MOVE "Genehmigung mit BMP 30            "
+                       TO DATEN-BUFFER1
+                     MOVE "Transaktion wird mit AC 81 beantwortet"
+                       TO DATEN-BUFFER2
+                     MOVE 81 TO W-AC
+                     PERFORM Z002-PROGERR
+                     EXIT SECTION
+                  END-IF
                END-IF
-           END-IF
-*G.01.47 - Ende
+**      ---> bei Teilgenehmigung, muss vorhanden sein
+            WHEN 2
+*G.01.47 - ENI Teilgenehmigung hat kein BMP 30 in Antwort
+               IF NOT VERF-AG
+                   IF IMSG-TBMP(30) = 0
+                      MOVE "Teilgenehmigung/Ablehnung ohne BMP 30"
+                        TO DATEN-BUFFER1
+                      MOVE "Transaktion wird mit AC 81 beantwortet"
+                        TO DATEN-BUFFER2
+                      MOVE 81 TO W-AC
+                      PERFORM Z002-PROGERR
+                      EXIT SECTION
+                   END-IF
+               END-IF
 **      ---> bei Ablehnung, muss = bmp4 aus Anfrage sein
-         WHEN OTHER
-           IF IMSG-TBMP(30) = 0
-              IF IMSG-TBMP(4) = 1
-                 MOVE "Ablehnung vom AS ohne BMP 30"
-                   TO DATEN-BUFFER1
-                 MOVE "Transaktion wird mit AC=81 beantwortet"
-                   TO DATEN-BUFFER2
-*G.01.28 - Anfang
-*                MOVE 91 TO W-AC
-**
-                 MOVE 81 TO W-AC
-*G.01.28 - Anfang
-                 PERFORM Z002-PROGERR
-                 EXIT SECTION
-              ELSE
-                 MOVE "Ablehnung ohne BMP 04 / 30"
-                   TO DATEN-BUFFER1
-*G.01.28 - Anfang
-*                MOVE 91 TO W-AC
-**
-                 MOVE 81 TO W-AC
-*G.01.28 - Anfang
-                 PERFORM Z002-PROGERR
-                 EXIT SECTION
-              END-IF
-            ELSE
+            WHEN OTHER
+               IF IMSG-TBMP(30) = 0
+                  IF IMSG-TBMP(4) = 1
+                     MOVE "Ablehnung vom AS ohne BMP 30"
+                       TO DATEN-BUFFER1
+                     MOVE "Transaktion wird mit AC=81 beantwortet"
+                       TO DATEN-BUFFER2
+                     MOVE 81 TO W-AC
+                     PERFORM Z002-PROGERR
+                     EXIT SECTION
+                  ELSE
+                     MOVE "Ablehnung ohne BMP 04 / 30"
+                       TO DATEN-BUFFER1
+                     MOVE 81 TO W-AC
+                     PERFORM Z002-PROGERR
+                     EXIT SECTION
+                  END-IF
+                ELSE
 **          ---> einige AS'sen, stellen den Wert links- andere rechtsbündig ein
-              IF IMSG-TBMP(4) = 1
-                 IF IMSG-CF(IMSG-TPTR(30) + 12:12)
-                  = W2AS-CF(W2AS-TPTR(4):W2AS-TLEN(4))
-                 OR  IMSG-CF(IMSG-TPTR(30)     :12)
-                  = W2AS-CF(W2AS-TPTR(4):W2AS-TLEN(4))
-                    CONTINUE
-                 ELSE
-                    MOVE "BMP30 in AS-Antwort <> BMP4 AS-Anfrage"
-                      TO DATEN-BUFFER1
-                    MOVE "Transaktion wird mit AC=81 beantwortet"
-                      TO DATEN-BUFFER2
-*G.01.28 - Anfang
-*                   MOVE 91 TO W-AC
-**
-                    MOVE 81 TO W-AC
-*G.01.28 - Anfang
-                    PERFORM Z002-PROGERR
-                    EXIT SECTION
-                 END-IF
-              END-IF
-            END-IF
-     END-EVALUATE
+                  IF IMSG-TBMP(4) = 1
+                     IF IMSG-CF(IMSG-TPTR(30) + 12:12)
+                      = W2AS-CF(W2AS-TPTR(4):W2AS-TLEN(4))
+                     OR  IMSG-CF(IMSG-TPTR(30)     :12)
+                      = W2AS-CF(W2AS-TPTR(4):W2AS-TLEN(4))
+                        CONTINUE
+                     ELSE
+                        MOVE "BMP30 in AS-Antwort <> BMP4 AS-Anfrage"
+                          TO DATEN-BUFFER1
+                        MOVE "Transaktion wird mit AC=81 beantwortet"
+                          TO DATEN-BUFFER2
+                        MOVE 81 TO W-AC
+                        PERFORM Z002-PROGERR
+                        EXIT SECTION
+                     END-IF
+                  END-IF
+                END-IF
+        END-EVALUATE
+     END-IF
+*G.02.03 - Ende
 
 *kl20171212 - G.01.36 - Prüfung nicht bei WAS2 wg. ausl. Karten
      IF W-ROUTKZ = 5
@@ -2168,14 +1836,10 @@
             MOVE "Transaktion wird mit AC 81 beantwortet"
               TO DATEN-BUFFER2
             MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*        SET ENDE TO TRUE
-*G.01.24 - Ende
             PERFORM Z002-PROGERR
             EXIT SECTION
         END-IF
      END-IF
-*kl20171212 - G.01.36 - Ende
 
 **  ---> BMP 41 - Terminal-Nummer, wenn in Anfrage vorhanden
      IF  W2AS-TBMP(41) = 1
@@ -2186,9 +1850,6 @@
              MOVE "Transaktion wird mit AC 81 beantwortet"
                TO DATEN-BUFFER2
              MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*            SET ENDE TO TRUE
-*G.01.24 - Ende
              PERFORM Z002-PROGERR
              EXIT SECTION
          END-IF
@@ -2202,28 +1863,13 @@
          MOVE "Transaktion wird mit AC 81 beantwortet"
            TO DATEN-BUFFER2
          MOVE 81 TO W-AC
-*G.01.24 - Anfang
-*        SET ENDE TO TRUE
-*G.01.24 - Ende
          PERFORM Z002-PROGERR
          EXIT SECTION
      END-IF
 
-**G.01.06 - Anfang
-* Wird im speziellen Teil geprüft, da dass Artikelmapping dort durchgeführt
-* wird
+
 **  ---> BMP 59 - Tracenummer Transportdaten muss gleich, sonst Problem mit MEMLOG
 **  ---> BMP 62 - Produktdaten enthalten? (nur bei AC=185)
-*     IF  W-AC-AS = 185
-*         IF  IMSG-TBMP(62) = 0
-*             MOVE "AC=185/87 ohne BMP 62"                 TO DATEN-BUFFER1
-*             MOVE "Transaktion wird trotzdem beantwortet" TO DATEN-BUFFER2
-*             PERFORM Z002-PROGERR
-*             EXIT SECTION
-*         END-IF
-*     END-IF
-*
-**G.01.06 - Ende
 
 **  ---> Antwortcode von IFSF auf WEAT umsetzen
      IF  W-AC-AS = ZERO
@@ -2245,15 +1891,12 @@
          END-IF
      END-IF
 
-*G.01.24 - Anfang Verschoben vom Section-Anfang
-
      IF W-AC > ZEROS
         CONTINUE
      ELSE
 **  ---> zunächst mal den MAC prüfen, sofern vorhanden
       SET MAC-NO TO TRUE
       IF IMSG-TBMP(64) = 1
-*G.01.14 - Anfang
 *G.02.01 - AS-VERF hier verwenden und Key bestimmen
          PERFORM D200-FIX-KEY
 *        EVALUATE W-ROUTKZ
@@ -2267,7 +1910,6 @@
                SET W66-IFSF TO TRUE
                PERFORM F910-MAC-PRUEFEN
          END-EVALUATE
-*G.01.14 - Ende
 
          IF  TRACE-ON
              MOVE "Test # - Ergebnis AS-MAC prüfen - AC:"
@@ -2283,15 +1925,11 @@
              MOVE "Transaktion wird mit AC 96 beantwortet"
                TO DATEN-BUFFER2
              MOVE 96 TO W-AC
-*G.01.24 - Anfang
-*            SET ENDE TO TRUE
-*G.01.24 - Ende
              PERFORM Z002-PROGERR
              EXIT SECTION
          END-IF
      END-IF
     END-IF
-*G.01.24 - Ende
      .
  C100-99.
       EXIT.
@@ -2312,7 +1950,6 @@
 **  ---> Nachrichtentyp für Nachricht setzen
      MOVE 210 TO W207-NTYPE
 
-*G.01.21 - Anfang
 **  ---> Dummy-MAC vorbereiten
      IF  W2TS-TBMP(64) = 1
          SET MAC-YES TO TRUE
@@ -2326,7 +1963,6 @@
      ELSE
          SET MAC-NO TO TRUE
      END-IF
-*G.01.21 - Ende
 
 **  ---> BMP  3 - AbWkz bleibt
 **  ---> BMP  4 - Betrag bleibt oder neu gesetzt bei AC=10
@@ -2345,15 +1981,8 @@
 **  ---> BMP 13 - Lokaldatum  übernehmen
 **  ---> BMP 54 - Originalbetrag (BMP4 aus Anfrage)
 
-*G.01.04 - Anfang
-*Nur bei Teilgenehmigungen (BMP39 = 10) von Automatentransaktionen
-*    IF  W2TS-TBMP(30) = 1
-**
-
      IF  IMSG-TBMP(30) = 1
      AND W-AC          = 10
-*G.01.04 - Ende
-
          MOVE IMSG-CF(IMSG-TPTR(49):IMSG-TLEN(49)) TO D-NUM4N
 **      ---> den Betrag aus der Terminalanfrage nehmen
          MOVE W2AS-CF(W2AS-TPTR(4):W2AS-TLEN(4)) TO D-NUM12
@@ -2369,12 +1998,8 @@
          MOVE 22 TO WTHEXS-SRC-LEN
          PERFORM V400-WT-HEX-STRING
 
-*G.01.04 - Anfang
-**       MOVE 30 TO W207-XBMP
-
          MOVE 1 TO W207-TBMP(54)
          MOVE 54 TO W207-XBMP
-*G.01.04 - Ende
 
          MOVE WTHEXS-DST-LEN TO W207-XCOBLEN
          MOVE WTHEXS-DST (1:WTHEXS-DST-LEN) TO W207-XCOBVAL
@@ -2410,27 +2035,11 @@
          EXIT SECTION
      END-IF
 
-**  ---> BMP 39 - Antwortcode
-*G.01.34 - Anfang
-*     IF  W-AC = ZERO
-**      ---> zunächst prüfen, ob ein spez. AC gesendet werden soll
-*         PERFORM M120-CALL-SYSABL1
-*     END-IF
-*     MOVE 39    TO W207-XBMP
-*     MOVE 02    TO W207-XCOBLEN
-*     MOVE W-ACX TO W207-XCOBVAL
-*     PERFORM L100-ADD-BMP
-*     IF  ENDE
-*         EXIT SECTION
-*     END-IF
-*G.01.34 - Ende
-
+**  ---> BMP 39 - Antwortcode woanders
 **  ---> BMP 41 - Terminalnummer übernehmen
-
 **  ---> BMP 42 - VUNR übernehmen
 
      MOVE 42               TO W207-XBMP
-
      MOVE VUNR OF TXILOG70 TO W207-XCOBVAL
      MOVE 15               TO W207-XCOBLEN
      PERFORM L100-ADD-BMP
@@ -2491,21 +2100,6 @@
 **  ---> BMP 63 - Artikeldaten (in AS-Tx zugelassen Prod. aus BMP62)
 **  --->          wird in den spezellen SECTIONs für AS abgewickelt
 
-*G.01.06- Anfang
-*
-**  ---> BMP 63 - ggf. Produktdaten aufbereiten
-*    IF  W-AC = 87 and IMSG-TBMP(62) = 1
-*        PERFORM E300-ARTIKELDATEN
-*        IF  ENDE
-*            EXIT SECTION
-*        END-IF
-*    END-IF
-**
-
-**  ---> BMP 63 Produktdaten aufbereiten
-
-*G.01.10 - Anfang
-
 *Fall3: AS-AC 185 und AS-BMP 62 nicht vorhanden, dann mit der
 *Nachricht 210 *AC 87 und BMP 63 mit 0 Produkten ans TS zurück schicken
 
@@ -2513,32 +2107,20 @@
      AND IMSG-TBMP(62) = 0
          MOVE 63                         TO W207-XBMP
          MOVE 1                          TO W207-XCOBLEN
-*G.01.43 - Anfang
-*        MOVE LOW-VALUE                  TO AMP-POS-VAL(1:AMP-POS-LEN)
-*        MOVE AMP-POS-VAL(1:AMP-POS-LEN) TO W207-XCOBVAL
-**
          MOVE LOW-VALUE                  TO AMP-POS-VAL(1:1)
          MOVE AMP-POS-VAL(1:1)           TO W207-XCOBVAL
-*G.01.43 - Ende
-
          PERFORM L100-ADD-BMP
          MOVE 87 TO W-AC
-
          EXIT SECTION
-
      END-IF
 
-*G.01.19 - Anfang
 *Wenn AC = 00 und Subfield 62-1 = 00 der AS-Antwort (1110) ,
 *dann keine BMP63 in der Nachricht 210 an das Terminal zurück.
-
      IF  W-AC-AS                  = ZEROS
      AND IMSG-TBMP(62)            = 1
      AND IMSG-CF(IMSG-TPTR(62):2) = ZEROS
          EXIT SECTION
      END-IF
-
-*G.01.19 - Ende
 
      IF IMSG-TBMP(62) = 1
         PERFORM E300-ARTIKELDATEN
@@ -2548,8 +2130,6 @@
         END-IF
 
      END-IF
-
-*G.01.10- Ende
 
 **  ---> damit sollte die Nachricht fertig sein
 **  ---> nur fürs testen
@@ -2582,22 +2162,13 @@
          WHEN 16     PERFORM D316-ORLEN
          WHEN 17     PERFORM D317-UTA
          WHEN 18     PERFORM D318-TND
-
-*G.01.11 - Anfang
          WHEN 22     PERFORM D322-EUROWAG
-*G.01.11 - Ende
-
-*G.01.13 - Anfang
          WHEN 23     PERFORM D323-LOGPAY
-*G.01.13 - Ende
-
-*G.01.40 - Anfang
          WHEN 24     PERFORM D324-STIGLECHNER
-*G.01.40 - Ende
-*G.01.46 - Roadrunner neu
          WHEN 25     PERFORM D325-ROADRUNNER
-*G.01.46 - Ende
-
+*G.02.03 -  E100 neu
+         WHEN 26     PERFORM D326-E100
+*G.02.03 - Ende
          WHEN OTHER
                  SET ENDE TO TRUE
 *G.02.01 - jetzt VERF-AS verwenden
@@ -2677,17 +2248,6 @@
          EXIT SECTION
      END-IF
 
-*G.01.03 - Anfang
-***  ---> nun noch UMSWEAT bedienen
-*    PERFORM G130-PUT-UMSWEAT
-*    IF  ENDE
-*        EXIT SECTION
-*    END-IF
-*
-***  ---> und schliesslich Eintrag in CRDUSEDN erzeugen
-*    PERFORM G140-PUT-CRDUSEDN
-***
-
 **  ---> und schliesslich Eintrag in CRDUSEDN erzeugen
      PERFORM G140-PUT-CRDUSEDN
      IF  ENDE
@@ -2695,21 +2255,12 @@
      END-IF
 
 **  ---> nun noch UMSWEAT bedienen
-
-*G.01.12 - Anfang
-*    IF W-AC = ZEROS
-*    OR W-AC = 10
-**
      IF W-AC-OK
-*G.01.12 - Ende
-
         PERFORM G130-PUT-UMSWEAT
         IF ENDE
            EXIT SECTION
         END-IF
      END-IF
-
-*G.01.03 - Ende
 
      .
  C500-99.
@@ -2799,11 +2350,9 @@
  D312-DKV SECTION.
  D312-00.
 
-*G.01.27 - Anfang
     IF IMSG-TBMP(55) = 1
        MOVE 1 TO W207-TBMP-O (55:1)
     END-IF
-*G.01.27 - Ende
      .
  D312-99.
      EXIT.
@@ -2864,7 +2413,6 @@
  D318-99.
      EXIT.
 
-*G.01.11 - Anfang
 
 ******************************************************************
 * spezielle Behandlung für das Eurowag-AS
@@ -2878,9 +2426,6 @@
  D322-99.
      EXIT.
 
-*G.01.11 - Ende
-
-*G.01.13 - Anfang
 
 ******************************************************************
 * spezielle Behandlung für das LogPay-AS
@@ -2893,10 +2438,6 @@
 
  D323-99.
      EXIT.
-
-*G.01.13 - Ende
-
-*G.01.40 - Anfang
 
 ******************************************************************
 * spezielle Behandlung für das Stiglechner-AS
@@ -2912,7 +2453,6 @@
  D324-99.
      EXIT.
 
-*G.01.40 - Ende
 
 ******************************************************************
 * spezielle Behandlung für das Roadrunner-AS
@@ -2926,6 +2466,19 @@
 
  D325-99.
      EXIT.
+     
+     
+******************************************************************
+* spezielle Behandlung für das E100-AS
+*G.02.03 - neu
+******************************************************************
+ D326-E100 SECTION.
+ D326-00.
+    
+     CONTINUE
+     .
+ D326-99.
+     EXIT.
 
 ******************************************************************
 * Aufruf Artikelmapper
@@ -2935,36 +2488,18 @@
 
 **  ---> Artikel mappen über Mappingserver
      SET AMP-S2P TO TRUE
-
-*G.01.07 - Anfang
-*    MOVE AS-CF(IMSG-TPTR(62):AS-TLEN(62)) TO AMP-POS-VAL
-*    MOVE AS-TLEN(62) TO AMP-POS-LEN
-**
-
+     
      MOVE AS-CF(IMSG-TPTR(62):AS-TLEN(62)) TO AMP-HOST-VAL
      MOVE AS-TLEN(62)                      TO AMP-HOST-LEN
-*G.01.07 - Ende
 
      MOVE W-MDNR      TO AMP-MDNR
      MOVE W-TSNR      TO AMP-TSNR
-
-*G.01.08 - Anfang
      MOVE W-CARDID    TO AMP-CARDID
-*G.01.08 - Ende
-
      MOVE ZEROS       TO AMP-RC
-
-*G.01.07 - Anfang
-*    MOVE ZEROS       TO AMP-HOST-LEN
-*    MOVE ALL SPACES  TO AMP-HOST-VAL
-
      MOVE ZEROS       TO AMP-POS-LEN
      MOVE ALL SPACES  TO AMP-POS-VAL
-*G.01.07 - Ende
 
-*G.01.08 - Anfang
      EVALUATE W-ROUTKZ
-
          WHEN 05  MOVE "AV" TO AMP-FORMAT
          WHEN 07  MOVE "SH" TO AMP-FORMAT
          WHEN 10  MOVE "TO" TO AMP-FORMAT
@@ -2974,29 +2509,13 @@
          WHEN 16  MOVE "OR" TO AMP-FORMAT
          WHEN 17  MOVE "UT" TO AMP-FORMAT
          WHEN 18  MOVE "TN" TO AMP-FORMAT
-
-*G.01.11 - Anfang
          WHEN 22  MOVE "EU" TO AMP-FORMAT
-*G.01.11 - Ende
-
-*G.01.13 - Anfang
          WHEN 23  MOVE "LO" TO AMP-FORMAT
-*G.01.13 - Ende
-
-*G.01.40 - Anfang
          WHEN 24  MOVE "IQ" TO AMP-FORMAT
-*G.01.40 - Ende
-
-*G.01.46 - Roadrunner neu
          WHEN 25  MOVE "RR" TO AMP-FORMAT
-*G.01.46 - Ende
-
          WHEN OTHER
               CONTINUE
-
      END-EVALUATE
-
-*G.01.08 - Ende
 
      MOVE ALL SPACES  TO AMP-TS63
      MOVE W2TS-CF(W2TS-TPTR(63):W2TS-TLEN(63)) TO AMP-TS63
@@ -3068,86 +2587,9 @@
 
      END-EVALUATE
 
-*kl20180306 - G.01.44 - Ende
      .
  E300-99.
      EXIT.
-******************************************************************
-* Nur zur Info: Die Altversuche - ersetzt durch G.01.44
-******************************************************************
-*G.01.06 - Anfang
-*
-**  ---> wenn alles ok in Nachricht einstellen
-*     IF  AMP-OK
-*         MOVE 62          TO W207-XBMP
-*         MOVE AMP-POS-LEN TO W207-XCOBLEN
-*         MOVE AMP-POS-VAL(1:AMP-POS-LEN) TO W207-XCOBVAL
-*         PERFORM L100-ADD-BMP
-*         EXIT SECTION
-*     END-IF
-
-**  ---> wenn alles ok in Nachricht einstellen
-*     IF  AMP-OK
-*G.01.34 - Anfang
-*        IF  AMP-POS-LEN = 1
-*        AND AMP-POS-VAL(1:AMP-POS-LEN) = LOW-VALUE
-*        AND (W-AC = 0 OR W-AC = 10)
-*kl20180206 - G.01.41 - Geht so nicht! Stattdessen kein BMP63
-*                       = Alle Artikel erlaubt
-*            MOVE  87    TO W-AC
-*            MOVE ZERO    TO W207-TBMP(63)
-*                            W207-TPTR(63)
-*                            W207-TLEN(63)
-*           nichts weiter erforderlich
-*            EXIT SECTION
-*kl20180206 - G.01.41 - Ende
-*        END-IF
-*G.01.34 - Ende
-*
-*         MOVE 63          TO W207-XBMP
-*         MOVE AMP-POS-LEN TO W207-XCOBLEN
-*         MOVE AMP-POS-VAL(1:AMP-POS-LEN) TO W207-XCOBVAL
-*         PERFORM L100-ADD-BMP
-*
-*Fall1: AS-AC 185 und AS-BMP 62 vorhanden und Mapping von mindestens
-*       einem Produkt möglich, dann 210er mit AC 87 und BMP 63 mit mindestens
-*       einem Produkt zurück ans TS
-*
-*        IF  W-AC-AS       = 185
-*        AND IMSG-TBMP(62) = 1
-*            MOVE 87 TO W-AC
-*        END-IF
-*        EXIT SECTION
-*
-*     END-IF
-
-**  ---> Return-Code aus Artikelmapper
-*     MOVE AMP-RC TO D-NUM4
-*     STRING  "Return-Code aus Artikelmapping: "
-*             D-NUM4
-*                 delimited by size
-*       INTO  DATEN-BUFFER1
-*     END-STRING
-*     PERFORM Z002-PROGERR
-
-*G.01.06 - Anfang
-
-*Fall2: AS-AC 185 und AS-BMP 62 vorhanden,jedoch kein Mapping möglich,
-*dann 210er AC 87, BMP 63 mit 0 Produkten zurück ans TS
-
-*     IF  W-AC-AS       = 185
-*     AND IMSG-TBMP(62) = 1
-*         MOVE 87 TO W-AC
-*     ELSE
-***Keine Artikel zurück zum Terminal und AC=96
-**G.01.31 bei unbekanntem Artikel (AMP-RC = 100)kein AC=96
-*
-*       IF AMP-RC NOT = 100
-*          MOVE 96 TO W-AC
-*       END-IF
-*     END-IF
-
-*G.01.06 - Ende
 
 ******************************************************************
 * erzeugen Fehlermeldung
@@ -3188,8 +2630,7 @@
  F910-99.
      EXIT.
 
-*G.01.14 - Anfang
-
+     
  F915-ASMAC-DUKPT SECTION.
  F915-00.
 *
@@ -3217,8 +2658,6 @@
  F915-99.
    EXIT.
 
-*G.01.14 - Ende
-
 ******************************************************************
 * Erstellen Antwort-MAC
 ******************************************************************
@@ -3232,10 +2671,7 @@
      MOVE W-MACKEYT         TO W66-TKEY-NAME (1:4)
      PERFORM M140-CALL-WSY7066
      IF  W66-ERR
-*G.01.24 - Anfang
-*        MOVE 30   TO W-AC
          MOVE 96   TO W-AC
-*G.01.24 - Anfang
          MOVE 1201 TO ERROR-NR of GEN-ERROR
          MOVE W66-RCODE TO D-NUM4
          STRING  "WSY7066@"          delimited by size
@@ -3246,9 +2682,6 @@
          MOVE "Bei F920-MAC-BILDEN" TO DATEN-BUFFER2
          MOVE "Transaktions-Ende"   TO DATEN-BUFFER3
          PERFORM Z002-PROGERR
-*G.01.24 - Anfang
-*        SET ENDE TO TRUE
-*G.01.24 - Ende
          EXIT SECTION
      END-IF
 
@@ -3263,12 +2696,7 @@
  G100-PUT-TXILOG70 SECTION.
  G100-00.
 **  ---> autorisierter Betrag
-*G.01.05 - ANFANG
-*    MOVE W18-BETRAG     TO BETRAG-AUTOR   of TXILOG70
-**
      MOVE W18-BETRAG-AUT TO BETRAG-AUTOR   of TXILOG70
-*G.01.05 - ENDE
-
      MOVE W-ASID         TO ASID           of TXILOG70
      MOVE W-AC-AS        TO AC-AS          of TXILOG70
      MOVE W-AC           TO AC-TERM        of TXILOG70
@@ -3379,16 +2807,11 @@
      MOVE TERMNR    of TXILOG70 TO SDB-TERMNR
      MOVE TRACENR   of TXILOG70 TO SDB-TRACENR
 
-*G.01.12 - Anfang
-*    MOVE W-AC                  TO SDB-AC
-**
      IF W-AC-OK
         MOVE ZEROS              TO SDB-AC
      ELSE
         MOVE W-AC               TO SDB-AC
      END-IF
-
-*G.01.12 - Ende
 
      MOVE BETRAG    of TXILOG70 TO SDB-BETRAG
      MOVE W-MDNR                TO SDB-MDNR
@@ -3545,44 +2968,6 @@
  M110-99.
      EXIT.
 
-*G.01.34 - Anfang
-******************************************************************
-* Aufruf Modul SYSABL1
-******************************************************************
-* M120-CALL-SYSABL1 SECTION.
-* M120-00.
-*     MOVE W-TERMNR      TO TABL-TERMNR
-*     MOVE K-MODUL       TO TABL-SERVER
-*     MOVE 88            TO TABL-RCODE
-*     SET TABL-CMD-NOTMF TO TRUE
-*     CALL "SYSABL1" USING TABL-SYSABL1C
-*
-*     EVALUATE TRUE
-*         WHEN TABL-OK    continue
-*         WHEN TABL-ABL   MOVE TABL-AC TO W-ACX
-*                         STRING  ">>> "
-*                                 TABL-AC
-*                                 " zum Terminal gesendet (TERMABL) <<<"
-*                                     delimited by size
-*                           INTO  DATEN-BUFFER1
-*                         END-STRING
-*                         PERFORM Z002-PROGERR
-*         WHEN OTHER      MOVE 1201 TO ERROR-NR of GEN-ERROR
-*                         MOVE TABL-RCODE TO D-NUM4
-*                         STRING  "SYSABL1@"
-*                                 D-NUM4
-*                                 "@"
-*                                 W-TERMNR
-*                                 "@"
-*                                     delimited by size
-*                           INTO  DATEN-BUFFER1
-*                         END-STRING
-*                         PERFORM Z002-PROGERR
-*     END-EVALUATE
-*     .
-* M120-99.
-*     EXIT.
-*G.01.34 - Ende
 
 ******************************************************************
 * Aufruf Modul WISO207
@@ -3659,11 +3044,8 @@
                                      delimited by size
                            INTO DATEN-BUFFER1
                          END-STRING
-*G.01.28 - Anfang
-*                        MOVE 91 TO W-AC
-**
                          MOVE 81 TO W-AC
-*G.01.28 - Anfang
+
 **      ---> BMP fehlt  ==> AC 30
          WHEN 4000 THRU 4999
                          MOVE CHK-RCODE TO D-NUM4
@@ -3673,11 +3055,7 @@
                                      delimited by size
                            INTO DATEN-BUFFER1
                          END-STRING
-*G.01.28 - Anfang
-*                        MOVE 91 TO W-AC
-**
                          MOVE 81 TO W-AC
-*G.01.28 - Anfang
 
 **      ---> BMP zuviel  ==> AC 30
          WHEN 5000 THRU 5999
@@ -3688,11 +3066,7 @@
                                      delimited by size
                            INTO DATEN-BUFFER1
                          END-STRING
-*G.01.28 - Anfang
-*                        MOVE 91 TO W-AC
-**
                          MOVE 81 TO W-AC
-*G.01.28 - Anfang
 
 **      ---> sonstige ?  ==> ENDE
          WHEN OTHER
@@ -4394,22 +3768,6 @@
 ******************************************************************
  U300-SEARCH-TAB SECTION.
  U300-00.
-*kl20170405 - G.01.45 - wg. Cardid ZERO zurueck zur klassischen
-*                       Verarbeitung
-*     MOVE ZERO TO T-AKT-IND
-*
-*     SEARCH ALL T-FCPARAM-TAB
-*
-*         AT END  SET PRM-NOT-FOUND TO TRUE
-*                 EXIT SECTION
-*
-*         WHEN    T-KEY (IND-TAB) = S-SEARCH-KEY
-*
-*                 SET PRM-FOUND TO TRUE
-*                 SET T-AKT-IND TO IND-TAB
-*                 continue
-*
-*     END-SEARCH
 
 *-->  SEARCH-KEY 2 besetzen
 *     übernehmen kompletten 1. Key
@@ -4432,7 +3790,6 @@
         END-IF
 
      END-PERFORM
-*kl20180405 - G.01.45 - Ende
      .
  U300-99.
      EXIT.
