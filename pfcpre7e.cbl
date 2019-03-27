@@ -2677,7 +2677,7 @@
 *G.06.39 - Sonderbehandlung verkürztes BMP 59 für Shell2
 *    Laenge aus allgemeinem Teil wieder reduzieren (nur noch 10 Byte:
 *    Release + Applikation + AS-Tracenr)
-*G.07.06 -
+*G.07.06 - Jetzt auf 16 Stellen bringen
 *     MOVE   10     TO W207-TLEN(59)
      MOVE   16     TO W207-TLEN(59)
 
