@@ -46,7 +46,7 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2019-03-20
+* Letzte Aenderung :: 2019-04-03
 * Letzte Version   :: G.07.06
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protok.
@@ -61,7 +61,11 @@
 *---------------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                        *
 *-------|----------|-----|--------------------------------------------------*
-*G.07.06|2019-03-05| kus | E100-4:
+*G.07.06|2019-04-03| kus | R7-510: 
+*       |          |     | - Shell INTERCHANGE-DESIGNATOR Behandlung
+*       |          |     | R7-507:
+*       |          |     | - Meldung, wenn Ablehnung wegen BIN Sperre
+*       |2019-03-05| kus | E100-4:
 *       |          |     | - Umsetzung E100
 *       |          |     | - AIID in TXILOG70.ASID speichern
 *       |          |     | F1ICC-153:
@@ -671,6 +675,12 @@
      05      W-BUFFER            PIC X(128).
      05      W-BUFFER-LEN        PIC S9(04) comp VALUE ZEROS.
      05      W-BUFFER-AKT        PIC S9(04) comp VALUE ZEROS.
+*G.07.06 - Interchange Designator
+     05      W-INTERCHANGE       PIC 9(01) VALUE ZEROS.
+          88 W-C-NATIONAL                   value 0 3 4 5 6 7 8 9.
+          88 W-C-INTERNATIONAL              value 1 2.
+     05      W-CRD-LKNZ          PIC 9(02) VALUE ZEROS.
+*G.07.06 - Ende
 
 *---------------------> Fuer Konvertierung der TSNR fuer VUNR
 *                       TSNR bekommen wir aus DB mit fuehrenden Nullen
@@ -1795,6 +1805,17 @@
      ELSE
          MOVE ZEROES                 TO W-ABL
      END-IF
+     
+*G.07.06 - Prüfung des Interchange Designators für euroShell 
+     IF W-CARDID = 11 
+         MOVE W-TEILSTRING (2) (5:1) TO W-INTERCHANGE
+         PERFORM C102-INTERCHANGE-DESIGNATOR
+         IF W-AC > 0
+            EXIT SECTION
+         END-IF
+     END-IF
+*G.07.06 - Ende
+     
 
 **  ---> Erfassungsart (BMP22) 
      MOVE IMSG-CF(IMSG-TPTR(22) + 1:2) TO W-ERFASSUNGS-ART
@@ -1902,7 +1923,7 @@
          END-IF
      END-IF
 
-**  ---> online PIN erforderlich? Dann BMP 52,53,57,64 Pflicht
+**  ---> online PIN erforderlich? Dann BMP 52,53,57,64 Pflicht 
 **  ---> dafür nachsehen, ob online PIN Pflicht ist
      SET PAC-NO TO TRUE
      MOVE 100  TO S-ISONTYP
@@ -2002,8 +2023,12 @@
 
 *       BIN gesperrt -> Ablehnung
         WHEN 004       MOVE 04 TO W-AC
+*G.07.06 - Meldung bei BIN Sperre
+                       INITIALIZE GEN-ERROR
+                       MOVE "Transaktion aufgrund von BIN-Sperre abgelehnt - AC 04"
+                                                TO DATEN-BUFFER1
+                       PERFORM Z002-PROGERR
                        EXIT SECTION
-
 *       Sonstiger Modulfehler -> Dummy-AC steht noch, neuer Versuch mit TSNR=0
         WHEN OTHER     INITIALIZE GEN-ERROR
                        STRING "Pruefung BIN-Sperre fehlgeschlagen - ",
@@ -2034,9 +2059,13 @@
 
 *    Ergebnis?
      EVALUATE BS-AC
-
         WHEN ZERO       CONTINUE
         WHEN 004        MOVE  04      TO W-AC
+                        INITIALIZE GEN-ERROR
+                        MOVE "Transaktion aufgrund von BIN-Sperre abgelehnt - AC 04"
+                                                 TO DATEN-BUFFER1
+                        PERFORM Z002-PROGERR
+*G.07.06 - Ende
         WHEN OTHER      INITIALIZE GEN-ERROR
                         STRING "Pruefung BIN-Sperre fehlgeschlagen - ",
                         BS-AC
@@ -2057,6 +2086,78 @@
      END-EVALUATE
      .
  C101-99.
+     EXIT.
+     
+     
+******************************************************************
+* Interchange Designator auf Spur 2 Daten prüfen
+* Ist auf der Spur 2 das Zeichen nach dem Ablaufdatum
+* Bei Wert 1 oder 2 geht Verarbeitung normal weiter (internationale Karten)
+* Andere Belegung deuten auf nationale Karten und lösen eine
+* Prüfung der Stellen 5 und 6 der PAN aus
+*G.07.06 - neu
+******************************************************************
+ C102-INTERCHANGE-DESIGNATOR SECTION.
+ C102-00.
+    
+    IF W-C-INTERNATIONAL
+        EXIT SECTION
+    END-IF
+    
+    MOVE W-KANR(5:2) TO W-CRD-LKNZ
+    
+    IF W-CRD-LKNZ = 14
+        EXIT SECTION
+    ELSE
+        MOVE 04 TO W-AC
+        INITIALIZE GEN-ERROR
+        MOVE "Nationale Karte abgelehnt" TO DATEN-BUFFER1
+        STRING "Ungueltiges Laenderkennzeichen in PAN: "
+            W-CRD-LKNZ
+        DELIMITED BY SIZE INTO DATEN-BUFFER2
+        PERFORM Z002-PROGERR
+    END-IF
+    
+** !!!!!!!!!!!!!!!!!!!!
+** Folgende Logik erstmal auskommentiert, da LKNZ in Station derzeit nicht richtig befüllt wird
+** Sollte das Feld in Zukunft richtig befüllt werden und weitere Länder neben Deutschland relevant werden
+** Muss die Logik wieder aktiviert und um ggf. weitere Länder erweitert werden
+** !!!!!!!!!!!!!!!!!!!!
+*    EVALUATE LKNZ OF STATION
+*        WHEN "DE"   IF NOT W-CRD-LKNZ = 14
+*                        MOVE 04 TO W-AC
+*                        INITIALIZE GEN-ERROR
+*                        MOVE "Nationale Karte abgelehnt" TO DATEN-BUFFER1
+*                        STRING "Station LKNZ "
+*                            LKNZ OF STATION,
+*                            "passt nicht zu PAN LKNZ ",
+*                            W-CRD-LKNZ
+*                        DELIMITED BY SIZE INTO DATEN-BUFFER2
+*                        PERFORM Z002-PROGERR
+*                    END-IF
+*                    
+*        WHEN "AT"   IF NOT W-CRD-LKNZ = 08
+*                        MOVE 04 TO W-AC
+*                        INITIALIZE GEN-ERROR
+*                        MOVE "Nationale Karte abgelehnt" TO DATEN-BUFFER1
+*                        STRING "Station LKNZ "
+*                            LKNZ OF STATION,
+*                            "passt nicht zu PAN LKNZ ",
+*                            W-CRD-LKNZ
+*                        DELIMITED BY SIZE INTO DATEN-BUFFER2
+*                        PERFORM Z002-PROGERR
+*                    END-IF        
+*                    
+*        WHEN OTHER  MOVE 04 TO W-AC
+*                    INITIALIZE GEN-ERROR
+*                    STRING "Station LKNZ unbekannt: "
+*                        LKNZ OF STATION
+*                    DELIMITED BY SIZE INTO DATEN-BUFFER1
+*                    PERFORM Z002-PROGERR    
+*    END-EVALUATE
+ 
+     .
+ C102-99.
      EXIT.
 
 ******************************************************************
@@ -3911,10 +4012,13 @@
      END-IF
 *G.06.34
 
-     MOVE TS-TLEN(63)    TO LEN of ARTIKEL of TXILOG70
-     MOVE TS-CF(TS-TPTR(63):TS-TLEN(63))
-                         TO VAL of ARTIKEL of TXILOG70
-
+*G.07.06 - um Absturz zu verhindern
+     IF TS-TBMP(63) = 1
+         MOVE TS-TLEN(63)    TO LEN of ARTIKEL of TXILOG70
+         MOVE TS-CF(TS-TPTR(63):TS-TLEN(63))
+                             TO VAL of ARTIKEL of TXILOG70
+     END-IF
+*G.07.06 - Ende
 
 **  ---> holen momentanen Zeitpunkt
      PERFORM U200-TIMESTAMP
@@ -4864,16 +4968,19 @@
 ******************************************************************
  S160-SELECT-STATION SECTION.
  S160-00.
+*G.07.06 - LKNZ wird gebraucht
      EXEC SQL
-         SELECT   ORT, NAME
+         SELECT   ORT, NAME, LKNZ
            INTO   :ORT of STATION
                  ,:NAME of STATION
+                 ,:LKNZ of STATION
            FROM  =STATION
           WHERE  MDNR, TSNR
                  =    :MDNR of STATION
                      ,:TSNR of STATION
          BROWSE  ACCESS
      END-EXEC
+*G.07.06 - Ende
      EVALUATE SQLCODE OF SQLCA
          WHEN ZERO   SET STATION-OK  TO TRUE
          WHEN OTHER  SET ENDE        TO TRUE

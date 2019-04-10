@@ -3748,7 +3748,10 @@
          MOVE W-BUFFER (1:W-BUFFER-LEN) TO W207-XCOBVAL (W207-XCOBLEN + 1:)
          ADD W-BUFFER-LEN TO W207-XCOBLEN
      ELSE
-         MOVE "33" TO W-BUFFER (W-BUFFER-LEN + 1:)
+*G.01.XX - Move korrigiert, Wert muss in W207-XCOBVAL
+*         MOVE "33" TO W-BUFFER (W-BUFFER-LEN + 1:)
+         MOVE "33" TO W207-XCOBVAL (W207-XCOBLEN + 1:)
+*G.01.XX - Ende
          ADD 2 TO W207-XCOBLEN
      END-IF
 

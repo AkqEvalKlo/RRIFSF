@@ -54,6 +54,8 @@
 *-------|----------|-----|-------------------------------------------*
 *G.02.03|2019-03-20| kus | E100-4:
 *       |          |     | - Umsetzung E100
+*       |          |     | R7-497:
+*       |2019-04-05|     | - ASID und Antwort BMP 33 richtig füllen
 *-------|----------|-----|-------------------------------------------*
 *G.02.02|2018-11-19| kus | DKVCHIP-25:
 *       |          |     | - BMP 55 ggf. vom AS an TS weiterleiten
@@ -2017,17 +2019,19 @@
 *    MOVE IMSG-CF(IMSG-TPTR(32):6) TO W207-XCOBVAL
 *                                     W-ASID
 **
-     IF IMSG-TLEN(32) > 6
-        MOVE 06 TO W207-XCOBLEN
-        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W207-XCOBVAL
-        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W-ASID
-     ELSE
+*G.02.03 - Länge muss nicht auf 6 begrenzt werden
+*     IF IMSG-TLEN(32) > 6
+*        MOVE 06 TO W207-XCOBLEN
+*        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W207-XCOBVAL
+*        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W-ASID
+*     ELSE
         MOVE IMSG-TLEN(32) TO W207-XCOBLEN
         MOVE IMSG-CF(IMSG-TPTR(32):IMSG-TLEN(32))
           TO W207-XCOBVAL
         MOVE IMSG-CF(IMSG-TPTR(32):IMSG-TLEN(32))
           TO W-ASID
-     END-IF
+*     END-IF
+*G.02.03 - Ende
 *G.01.42 - Ende
 
      PERFORM L100-ADD-BMP

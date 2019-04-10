@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2019-03-25
-* Letzte Version   :: G.03.07
+* Letzte Aenderung :: 2019-04-10
+* Letzte Version   :: G.03.08
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -65,6 +65,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.03.08|2019-04-10| kus | F1WAS-35:
+*       |          |     | - BMP 48-8 zu Roadrunner
 *-------|----------|-----|-------------------------------------------*
 *G.03.07|2019-03-25| kus | E100-6:
 *       |          |     | - Umsetzung E100
@@ -3016,8 +3019,42 @@
          END-IF
      END-IF
 
+     
+*G.03.08 - Default geht nicht mehr, da nun 48.8 enthalten sein muss 
 **  ---> und BMP48 aufbereiten
-     PERFORM E310-BMP48-DEFAULT
+*     PERFORM E310-BMP48-DEFAULT
+     
+**  ---> BMP 48 - geht erst nach Artikel-Mapper (fummelt aus BMP63 ggf.
+**  --->          noch Fahrerdaten, die einzustellen sind (48.8))
+**  ---> zunächst die BitMap erstellen
+     MOVE ALL ZEROES TO W-BYTEMAP-48
+     MOVE LOW-VALUE  TO W-BITMAP
+     MOVE SPACES     TO W207-XCOBVAL
+     MOVE 8          TO W207-XCOBLEN
+
+**  +++> jetzt das Subfeld 4 (Fixwert)
+     MOVE "1"        TO W-BYTEMAP-48(4:1)
+     MOVE "0000000001" TO W207-XCOBVAL (W207-XCOBLEN + 1:)
+     ADD 10 TO W207-XCOBLEN
+
+**  +++> und jetzt das Subfeld 8 (Kfz-Daten)
+     IF  KFZ-YES AND W-48-LEN > ZERO
+         MOVE W-BMP48-VAL (1:W-48-LEN) TO W207-XCOBVAL (W207-XCOBLEN + 1:)
+         ADD W-48-LEN TO W207-XCOBLEN
+         MOVE "1"     TO W-BYTEMAP-48(8:1)
+     END-IF
+
+**  +++>  nun die Bitmap einfügen
+     ENTER TAL "WT^BY2BI" USING W-BITMAP W-BYTEMAP-48
+     MOVE W-BITMAP TO W207-XCOBVAL (1:8)
+
+     MOVE 48 TO W207-XBMP
+     PERFORM L100-ADD-BMP
+     IF  ENDE
+         EXIT SECTION
+     END-IF
+*G.03.08 - Ende
+     
      .
  D325-99.
      EXIT.

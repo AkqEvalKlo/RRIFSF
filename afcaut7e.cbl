@@ -41,8 +41,8 @@
 
 
 *******************************************************************************
-* Letzte Aenderung :: 2019-03-12
-* Letzte Version   :: G.03.03
+* Letzte Aenderung :: 2019-04-05
+* Letzte Version   :: G.03.04
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanantworten vom AS-IFSF-Protokoll
 * Kurzbeschreibung :: auf WEAT-TERMINAL-Protokoll um. Bearbeitet werden
@@ -55,6 +55,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.03.04|2019-04-05| kus | R7-496:
+*       |          |     | - ASID richtig
 *-------|----------|-----|-------------------------------------------*
 *G.03.03|2019-03-12| kus | E100-3:
 *       |          |     | - Umsetzung E100
@@ -1956,18 +1959,20 @@
 *    MOVE 06 TO W207-XCOBLEN
 *    MOVE IMSG-CF(IMSG-TPTR(32):6) TO W207-XCOBVAL
 *                                     W-ASID
-     IF IMSG-TLEN(32) > 6
-        MOVE 06 TO W207-XCOBLEN
-        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W207-XCOBVAL
-        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W-ASID
-     ELSE
+*G.03.04 - muss nicht auf 6 begrenzt werden
+*     IF IMSG-TLEN(32) > 6
+*        MOVE 06 TO W207-XCOBLEN
+*        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W207-XCOBVAL
+*        MOVE IMSG-CF(IMSG-TPTR(32):6) TO W-ASID
+*     ELSE
         MOVE IMSG-TLEN(32)
           TO W207-XCOBLEN
         MOVE IMSG-CF(IMSG-TPTR(32):IMSG-TLEN(32))
           TO W207-XCOBVAL
         MOVE IMSG-CF(IMSG-TPTR(32):IMSG-TLEN(32))
           TO W-ASID
-     END-IF
+*     END-IF
+*G.03.04 - Ende
 *G.02.09 - Ende
 
      PERFORM L100-ADD-BMP
