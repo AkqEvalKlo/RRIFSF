@@ -39,8 +39,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2018-11-26
-* Letzte Version   :: G.02.01
+* Letzte Aenderung :: 2019-04-10
+* Letzte Version   :: G.02.02 
 * Kurzbeschreibung :: Standin: Die Leitung zum AS ist während
 * Kurzbeschreibung :: einer Transaktion nicht aktiv. Der Anfrage-
 * Kurzbeschreibung :: server leitet die Anfrage deshalb über
@@ -48,13 +48,16 @@
 * Kurzbeschreibung :: PFCSIP7E weiter, indem der NEXTSERVER
 * Kurzbeschreibung :: auf PFCSIP7E gesetzt wird.
 * Package          :: ICC
-* Auftrag          :: R7-269
 *
 * Aenderungen
 *
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|-------- -|-----|---------------------------------------*
+*G.02.02|2019-04-10| kus | DKVCHIP-28:
+*       |          |     | - Terminal darf 42 senden, dann das 
+*       |          |     |  benutzen und nicht in Antwort stellen
+*-------|----------|-----|---------------------------------------*
 *G.02.01|2018-11-26| kus | R7-408:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
 *       |          |     | DKVCHIP-26:
@@ -2412,7 +2415,13 @@
 
 **  ---> BMP 42 - VUNR
      MOVE 42               TO W207-XBMP
-     MOVE VUNR of TSKART40 TO W207-XCOBVAL
+*G.02.02 - Wenn in Anfrage, dann das zum AS
+     IF TS-TBMP(42) = 1
+        MOVE TS-CF(TS-TPTR(42):TS-TLEN(42)) TO W207-XCOBVAL
+     ELSE
+        MOVE VUNR of TSKART40 TO W207-XCOBVAL
+     END-IF
+*G.02.02 - Ende
      MOVE 15               TO W207-XCOBLEN
      PERFORM L100-ADD-BMP
      IF  ENDE
@@ -3071,13 +3080,27 @@
      END-IF
 
 **  ---> BMP 42 - VUNR
-     MOVE 42               TO W207-XBMP
-     MOVE VUNR of TSKART40 TO W207-XCOBVAL
-     MOVE 15               TO W207-XCOBLEN
-     PERFORM L100-ADD-BMP
-     IF  ENDE
-         EXIT SECTION
+*G.02.02 - Wenn nicht in Anfrage, dann in Antwort
+*     MOVE 42               TO W207-XBMP
+*     MOVE VUNR of TSKART40 TO W207-XCOBVAL
+*     MOVE 15               TO W207-XCOBLEN
+*     PERFORM L100-ADD-BMP
+*     IF  ENDE
+*         EXIT SECTION
+*     END-IF
+
+     IF TS-TBMP(42) = 0
+        MOVE 42               TO W207-XBMP
+        MOVE VUNR of TSKART40 TO W207-XCOBVAL
+        MOVE 15               TO W207-XCOBLEN
+        PERFORM L100-ADD-BMP
+        IF  ENDE
+            EXIT SECTION
+        END-IF
+     ELSE
+        MOVE ZERO TO W207-TBMP(42)
      END-IF
+*G.02.02 - Ende
 
 **BMP63 Artikeldaten
      IF W-AC = 87
@@ -3464,7 +3487,14 @@
          MOVE "OP"       TO TRANS-TYP      of TXILOG70
      END-IF
      MOVE 5541           TO BRANCHEN-KZ    of TXILOG70
-     MOVE VUNR of TSKART40 TO VUNR         of TXILOG70
+*G.02.02 - Wenn in Anfrage, dann das Speichern
+     IF TS-TBMP(42) = 1
+        MOVE TS-CF(TS-TPTR(42):TS-TLEN(42)) TO VUNR of TXILOG70
+     ELSE
+        MOVE VUNR of TSKART40               TO VUNR of TXILOG70
+     END-IF
+*     MOVE VUNR of TSKART40 TO VUNR         of TXILOG70
+*G.02.02 - Ende
      MOVE W-ZP-VERKAUF   TO ZP-VERKAUF     of TXILOG70
      MOVE W-BMP07        TO AF-BMP07       of TXILOG70
 

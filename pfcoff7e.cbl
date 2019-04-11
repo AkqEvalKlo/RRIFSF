@@ -1601,7 +1601,9 @@
 
 *G.07.04 - Für TOTAL/MICA R7 Offliner nie beauftragt, trotzdem AC 0 -> Umsatz Eintrag
 *          dafür Prüfort auf FEP stellen, dadurch keine AS-Anfrage aber Rest wie normale Trx
-     IF W-ROUTKZ = 10
+*G.07.08 - gleiches Handling für E100
+     IF W-ROUTKZ = 10 OR W-ROUTKZ = 26
+*G.07.08 - Ende
         SET PRF-FEP TO TRUE
      END-IF
 *G.07.04 - Ende
@@ -3748,10 +3750,10 @@
          MOVE W-BUFFER (1:W-BUFFER-LEN) TO W207-XCOBVAL (W207-XCOBLEN + 1:)
          ADD W-BUFFER-LEN TO W207-XCOBLEN
      ELSE
-*G.01.XX - Move korrigiert, Wert muss in W207-XCOBVAL
+*G.07.08 - Move korrigiert, Wert muss in W207-XCOBVAL
 *         MOVE "33" TO W-BUFFER (W-BUFFER-LEN + 1:)
          MOVE "33" TO W207-XCOBVAL (W207-XCOBLEN + 1:)
-*G.01.XX - Ende
+*G.07.08 - Ende
          ADD 2 TO W207-XCOBLEN
      END-IF
 
