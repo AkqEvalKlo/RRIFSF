@@ -44,8 +44,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2019-04-03
-* Letzte Version   :: G.04.06
+* Letzte Aenderung :: 2019-04-12
+* Letzte Version   :: G.04.07
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -57,6 +57,12 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.04.07|2019-04-12| kus | R7-510: 
+*       |          |     | - Shell INTERCHANGE-DESIGNATOR Behandlung
+*       |          |     |   nicht bei Handeingabe
+*       |          |     | R7-520:
+*       |          |     | - Shell (Routkz 7) ggf. BMP 33 ans AS
 *-------|----------|-----|-------------------------------------------*
 *G.04.06|2019-04-03| kus | R7-510: 
 *       |          |     | - Shell INTERCHANGE-DESIGNATOR Behandlung
@@ -1910,7 +1916,9 @@
      END-IF
      
 *G.04.06 - Prüfung des Interchange Designators für euroShell 
-     IF W-CARDID = 11 
+*G.04.07 - Erfassung muss Spur 2 sein
+     IF W-CARDID = 11 AND ERF-SPUR2
+*G.04.07 - Ende
          MOVE W-TEILSTRING (2) (5:1) TO W-INTERCHANGE
          PERFORM C102-INTERCHANGE-DESIGNATOR
          IF W-AC > 0
@@ -2955,7 +2963,32 @@
  D307-00.
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
-
+     
+*G.04.07 - BMP 33 für Shell AS ROUTKZ 7, für 27 erstmal nicht
+**  ---> BMP 33 - Forwarding Institution Identification Code
+     IF W-ROUTKZ = 7
+         MOVE 33        TO S-BMP
+         MOVE IMSG-MDNR TO S-LFDNR
+         PERFORM U300-SEARCH-TAB
+         IF  PRM-NOT-FOUND
+             MOVE ZERO TO S-LFDNR
+             PERFORM U300-SEARCH-TAB
+         END-IF
+         
+         IF PRM-FOUND
+             PERFORM U400-INTERPRET-ABWEICHUNG
+             MOVE 33           TO W207-XBMP
+             MOVE W-BUFFER-LEN TO W207-XCOBLEN
+             MOVE W-BUFFER     TO W207-XCOBVAL
+             PERFORM L100-ADD-BMP
+             IF  ENDE
+                 EXIT SECTION
+             END-IF
+         END-IF
+     END-IF
+*G.04.07 - Ende
+     
+     
 **  ---> BMP 43 - Ort
      MOVE 43 TO W207-XBMP
 

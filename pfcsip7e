@@ -57,6 +57,8 @@
 *G.02.02|2019-04-10| kus | DKVCHIP-28:
 *       |          |     | - Terminal darf 42 senden, dann das 
 *       |          |     |  benutzen und nicht in Antwort stellen
+*       |          |     | R7-530:
+*       |          |     | - AIID in TXILOG70.ASID speichern
 *-------|----------|-----|---------------------------------------*
 *G.02.01|2018-11-26| kus | R7-408:
 *       |          |     | - Umstellung von festem ROUTKZ auf AS-Verf
@@ -3453,7 +3455,10 @@
      MOVE W-CARDID       TO CARDID         of TXILOG70
      MOVE W-ROUTKZ       TO ROUTKZ         of TXILOG70
      MOVE W-LTGIND       TO LTGIND         of TXILOG70
-     MOVE 740000         TO ASID           of TXILOG70
+*G.02.02 - AIID in ASID
+     MOVE W-AIID         TO ASID           of TXILOG70
+*     MOVE 740000         TO ASID           of TXILOG70
+*G.02.02 - Ende
      MOVE 9999           TO AC-AS          of TXILOG70
      MOVE W-AC           TO AC-TERM        of TXILOG70
      MOVE WKZ-WKZ-A      TO WKZ            of TXILOG70

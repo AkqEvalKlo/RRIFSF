@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2019-03-25
-* Letzte Version   :: G.07.08
+* Letzte Aenderung :: 2019-04-12
+* Letzte Version   :: G.07.09
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -65,6 +65,10 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.07.09|2019-04-12| kus | R7-524
+*       |          |     | - Shell (Routkz 7) ggf. BMP 33 ans AS
+*       |          |     | - TS Antwort BMP 33 mit AIID füllen
 *-------|----------|-----|-------------------------------------------*
 *G.07.08|2019-03-25| kus | E100-7:
 *       |          |     | - Umsetzung E100
@@ -2616,7 +2620,7 @@
 
 *G.07.02 - kein Update mehr bei bereits vorhandenen, Änderung G.03.00 rückgängig
 *     IF DUPLICATE-KEY-NO
-
+***!!!!!!!!!! HIER AUCH ENDE ABFANGEN !!!!
       IF  W-AC = ZEROS
 **  ---> UMSWEAT Insert
         PERFORM G130-PUT-UMSWEAT
@@ -2745,6 +2749,31 @@
 **  ---> Anwendung für MAC-Bildung setzen
      SET W66-DEFAULT TO TRUE
 
+*G.07.09 - BMP 33 für Shell AS ROUTKZ 7, für 27 erstmal nicht
+**  ---> BMP 33 - Forwarding Institution Identification Code
+     IF W-ROUTKZ = 7
+         MOVE 33        TO S-BMP
+         MOVE IMSG-MDNR TO S-LFDNR
+         PERFORM U300-SEARCH-TAB
+         IF  PRM-NOT-FOUND
+             MOVE ZERO TO S-LFDNR
+             PERFORM U300-SEARCH-TAB
+         END-IF
+         
+         IF PRM-FOUND
+             PERFORM U400-INTERPRET-ABWEICHUNG
+             MOVE 33           TO W207-XBMP
+             MOVE W-BUFFER-LEN TO W207-XCOBLEN
+             MOVE W-BUFFER     TO W207-XCOBVAL
+             PERFORM L100-ADD-BMP
+             IF  ENDE
+                 EXIT SECTION
+             END-IF
+         END-IF
+     END-IF
+*G.07.09 - Ende
+     
+     
 **  ---> BMP 43 - Ort
      MOVE 43 TO W207-XBMP
 
@@ -3646,14 +3675,22 @@
 **  ---> Nachrichtentype setzen
      MOVE 0210 TO W207-NTYPE
 
+*G.07.09 - Die AIID soll als AS-ID an die Terminals gesendet werden
 **  ---> BMP 33: WEAT als AS-ID
-     MOVE 33       TO W207-XBMP
-     MOVE "740000" TO W207-XCOBVAL
-     MOVE 6        TO W207-XCOBLEN
+     MOVE 33        TO W207-XBMP
+*     MOVE "740000" TO W207-XCOBVAL
+*     MOVE 6        TO W207-XCOBLEN
+     MOVE W-AIID TO W207-XCOBVAL
+     MOVE ZERO   TO D-NUM4N
+     INSPECT W-AIID TALLYING D-NUM4N
+     FOR CHARACTERS BEFORE INITIAL " "
+     MOVE D-NUM4N TO W207-XCOBLEN
      PERFORM L100-ADD-BMP
      IF  ENDE
          EXIT SECTION
      END-IF
+*G.07.09 - Ende
+
 
 **  ---> BMP39  ACODE
      MOVE 39    TO W207-XBMP
