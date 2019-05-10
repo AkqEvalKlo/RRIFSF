@@ -51,8 +51,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2019-04-12
-* Letzte Version   :: G.07.09
+* Letzte Aenderung :: 2019-05-09
+* Letzte Version   :: G.07.10
 * Kurzbeschreibung :: Dieses Programm bearbeitet Flottenkarten-
 * Kurzbeschreibung :: Offline-Buchungen. Die Terminalanfragen
 * Kurzbeschreibung :: werden auf AS-IFSF-Protokoll umgesetzt und
@@ -65,6 +65,15 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.07.10|2019-05-03| kus | R7-543
+*       |          |     | - AIID aus =FCAIID in TXILOG70.ACQUIRER ID
+*       |          |     | R7-547
+*       |          |     | - Logging härten
+*       |          |     | - Wenn ein Insert abbricht, die weiteren
+*       |          |     |   auch nicht mehr machen (TXILOG70,
+*       |          |     |   TXNLOG70, UMSWEAT)
+*       |          |     | - Spur 2 Fehler abfangen
 *-------|----------|-----|-------------------------------------------*
 *G.07.09|2019-04-12| kus | R7-524
 *       |          |     | - Shell (Routkz 7) ggf. BMP 33 ans AS
@@ -1876,8 +1885,19 @@
          END-UNSTRING
          MOVE W-TEILSTRING (1) TO W-KANR
          MOVE W-COUNT (1)      TO W-KANR-LEN
+*G.07.10 - Ablaufmonat muss numeric sein
          IF  C4-ANZ > 1
-             MOVE W-TEILSTRING (2) (1:4) TO W-ABL
+             IF W-TEILSTRING(2) (1:4) NUMERIC
+                MOVE W-TEILSTRING (2) (1:4) TO W-ABL
+             ELSE
+                MOVE ZEROES                 TO W-ABL
+                MOVE 30  TO W-AC
+                MOVE 2201 TO ERROR-NR of GEN-ERROR
+                MOVE "Ablaufdatum Spur 2 nicht numerisch" TO DATEN-BUFFER1
+                PERFORM Z002-PROGERR
+                EXIT SECTION
+             END-IF
+*G.07.10 - Ende                
          ELSE
              MOVE ZEROES                 TO W-ABL
          END-IF
@@ -2609,9 +2629,16 @@
 
 **  ---> Führungstabelle =TXILOG70
      PERFORM G100-PUT-TXILOG70
-
+*G.07.10 - kein weiteres Logging, wenn es irgendwo abgebrochen ist
+     IF TXILOG70-NOK
+        EXIT SECTION
+     END-IF   
+     
 **  ---> Anfragenachricht für Tabelle =TXNLOG70 TS-Nachrichten
      PERFORM G110-PUT-TXNLOG70-TS
+     IF TXNLOG70-NOK
+        EXIT SECTION
+     END-IF   
  
 **  ---> und schliesslich Eintrag in CRDUSEDN erzeugen
     IF W-KANR > SPACES
@@ -2620,8 +2647,8 @@
 
 *G.07.02 - kein Update mehr bei bereits vorhandenen, Änderung G.03.00 rückgängig
 *     IF DUPLICATE-KEY-NO
-***!!!!!!!!!! HIER AUCH ENDE ABFANGEN !!!!
-      IF  W-AC = ZEROS
+      IF  W-AC = ZEROS AND NOT ENDE
+*G.07.10 - Ende
 **  ---> UMSWEAT Insert
         PERFORM G130-PUT-UMSWEAT
         IF  ENDE
@@ -4094,7 +4121,10 @@
          MOVE "G"        TO KZ-UMSATZ      of TXILOG70
      END-IF
      MOVE W-ABL          TO ABL-JJMM       of TXILOG70
-     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+*G.07.10 - AIID in acquirer id
+*     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+     MOVE W-AIID (1:6)   TO ACQUIRER-ID    of TXILOG70
+*G.07.10 - Ende
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART of TXILOG70
 
 *kl20180316 - G.06.33 - Unterscheidung zwischen Chip und Spur2
