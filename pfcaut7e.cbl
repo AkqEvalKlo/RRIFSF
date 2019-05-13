@@ -44,8 +44,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2019-04-12
-* Letzte Version   :: G.04.07
+* Letzte Aenderung :: 2019-05-10
+* Letzte Version   :: G.04.08
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -57,6 +57,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.04.08|2019-05-10| kus | R7-539: 
+*       |          |     | - AIID in TXILOG70.ACQUIRER_ID
 *-------|----------|-----|-------------------------------------------*
 *G.04.07|2019-04-12| kus | R7-510: 
 *       |          |     | - Shell INTERCHANGE-DESIGNATOR Behandlung
@@ -4217,7 +4220,10 @@
          MOVE "G"        TO KZ-UMSATZ      of TXILOG70
      END-IF
      MOVE W-ABL          TO ABL-JJMM       of TXILOG70
-     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+*G.04.08 - AIID in ACQUIRER-ID
+*     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+     MOVE W-AIID         TO ACQUIRER-ID    of TXILOG70
+*G.04.08 - Ende
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART of TXILOG70
 
 *kl20180315 - G.03.12 - Unterscheidung zwischen Chip und Spur2

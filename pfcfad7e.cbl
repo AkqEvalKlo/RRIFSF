@@ -50,8 +50,8 @@
 
 
 ******************************************************************
-* Letzte Aenderung :: 2019-04-12
-* Letzte Version   :: G.03.09
+* Letzte Aenderung :: 2019-05-10
+* Letzte Version   :: G.03.10
 * Kurzbeschreibung :: Umsetzung Flottenkarten-Teil-
 * Kurzbeschreibung :: Stornierungsanfragen vom Trm-Protokoll
 * Kurzbeschreibung :: auf AS0IFSF-Protokoll um. Bearbeitet
@@ -65,6 +65,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.03.10|2019-05-10| kus | R7-542: 
+*       |          |     | - AIID in TXILOG70.ACQUIRER_ID
 *-------|----------|-----|-------------------------------------------*
 *G.03.09|2019-04-12| kus | R7-522
 *       |          |     | - Shell (Routkz 7) ggf. BMP 33 ans AS
@@ -3782,7 +3785,10 @@
 *G.02.51 - neues KZ-VERF fuer Chip
 *     MOVE "f"            TO KZ-VERF        of TXILOG70
      MOVE W-ABL          TO ABL-JJMM       of TXILOG70
-     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+*G.03.10 - AIID in ACQUIRER-ID
+*     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+     MOVE W-AIID         TO ACQUIRER-ID    of TXILOG70
+*G.03.10 - Ende
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART of TXILOG70
 
 *kl20180316 - G.02.40 - Unterscheidung zwischen Chip und Spur2

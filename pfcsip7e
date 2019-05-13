@@ -39,8 +39,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2019-04-10
-* Letzte Version   :: G.02.02 
+* Letzte Aenderung :: 2019-05-10
+* Letzte Version   :: G.02.03
 * Kurzbeschreibung :: Standin: Die Leitung zum AS ist während
 * Kurzbeschreibung :: einer Transaktion nicht aktiv. Der Anfrage-
 * Kurzbeschreibung :: server leitet die Anfrage deshalb über
@@ -54,6 +54,9 @@
 *----------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                             *
 *-------|-------- -|-----|---------------------------------------*
+*G.02.03|2019-05-10| kus | R7-539: 
+*       |          |     | - AIID in TXILOG70.ACQUIRER_ID
+*-------|----------|-----|-------------------------------------------*
 *G.02.02|2019-04-10| kus | DKVCHIP-28:
 *       |          |     | - Terminal darf 42 senden, dann das 
 *       |          |     |  benutzen und nicht in Antwort stellen
@@ -3478,7 +3481,10 @@
          MOVE "G"        TO KZ-UMSATZ      of TXILOG70
      END-IF
      MOVE W-ABL          TO ABL-JJMM       of TXILOG70
-     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+*G.02.03 - AIID in ACQUIRER-ID
+*     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+     MOVE W-AIID         TO ACQUIRER-ID    of TXILOG70
+*G.02.03 - Ende
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART of TXILOG70
      MOVE 221            TO KARTEN-ART     of TXILOG70
      IF  W-ERFASSUNGS-ART = 01

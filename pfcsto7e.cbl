@@ -39,8 +39,8 @@
 
 
 ****************************************************************
-* Letzte Aenderung :: 2019-04-12
-* Letzte Version   :: G.02.09
+* Letzte Aenderung :: 2019-05-10
+* Letzte Version   :: G.02.10
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Stornierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -54,6 +54,9 @@
 *---------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                  *
 *-------|----------|-----|--------------------------------------------*
+*G.02.10|2019-05-10| kus | R7-541: 
+*       |          |     | - AIID in TXILOG70.ACQUIRER_ID
+*-------|----------|-----|-------------------------------------------*
 *G.02.09|2019-04-12| kus | R7-523
 *       |          |     | - Shell (Routkz 7) ggf. BMP 33 ans AS
 *-------|----------|-----|-------------------------------------------*
@@ -3495,7 +3498,10 @@
          MOVE "M"        TO KZ-UMSATZ      OF TXILOG70
      END-IF
      MOVE W-ABL          TO ABL-JJMM       OF TXILOG70
-     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    OF TXILOG70
+*G.02.10 - AIID in ACQUIRER-ID
+*     MOVE W-ACQUIRER-ID  TO ACQUIRER-ID    of TXILOG70
+     MOVE W-AIID         TO ACQUIRER-ID    of TXILOG70
+*G.02.10 - Ende
      MOVE W-ERFASSUNGS-ART TO ERFASSUNGS-ART OF TXILOG70
 *G.00.33 - Wenn Chip Erfassung -> EMV Daten loggen und Trans-Art aendern
 *G.02.03 - Chip Kontaktlos auch beachten
