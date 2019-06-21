@@ -44,8 +44,8 @@
 
 
 **************************************************************
-* Letzte Aenderung :: 2019-05-10
-* Letzte Version   :: G.04.08
+* Letzte Aenderung :: 2019-06-21
+* Letzte Version   :: G.04.09
 * Kurzbeschreibung :: Dieses Programm setzt Flottenkarten-
 * Kurzbeschreibung :: Autorisierungsanfragen vom Terminal-Protokoll
 * Kurzbeschreibung :: auf AS-IFSF-Protokoll um. Bearbeitet werden
@@ -57,6 +57,9 @@
 *
 *--------------------------------------------------------------------*
 * Vers. | Datum    | von | Kommentar                                 *
+*-------|----------|-----|-------------------------------------------*
+*G.04.09|2019-05-10| kus | DKVCHIP-32: 
+*       |          |     | - Fallback Implementierung
 *-------|----------|-----|-------------------------------------------*
 *G.04.08|2019-05-10| kus | R7-539: 
 *       |          |     | - AIID in TXILOG70.ACQUIRER_ID
@@ -715,6 +718,9 @@
           88 W-ERF-MAGNET                    value 02.
           88 W-ERF-CHIP                      value 05.
           88 W-ERF-KONTAKTLOS                value 07 91.
+*G.04.09 - Fallback möglich
+          88 W-ERF-FALLBACK                  value 80.
+*G.04.09 - Ende
 
      05      W-TRANS-ART         PIC X(02).
      05      W-KANR              PIC X(19).
@@ -1970,6 +1976,9 @@
      IF  (W-ERFASSUNGS-ART = "01" and not ERF-MANUELL)
      or  (W-ERFASSUNGS-ART = "02" and not ERF-SPUR2)
      or  (W-ERFASSUNGS-ART = "05" and not ERF-SPUR2)
+*G.04.09 - Fallback beachten
+     or  (W-ERFASSUNGS-ART = "80" and not ERF-SPUR2)
+*G.04.09 - Ende
          SET ERF-ERROR TO TRUE
          MOVE 30  TO W-AC
          MOVE 2201 TO ERROR-NR of GEN-ERROR
@@ -2382,6 +2391,9 @@
          WHEN W-ERF-MAGNET       MOVE "2" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-CHIP         MOVE "5" TO W207-XCOBVAL (7:1)
          WHEN W-ERF-KONTAKTLOS   MOVE "A" TO W207-XCOBVAL (7:1)
+*G.04.09 - Fallback auch möglich
+         WHEN W-ERF-FALLBACK     MOVE "D" TO W207-XCOBVAL (7:1)
+*G.04.09 - Ende
          WHEN OTHER              MOVE "3" TO W207-XCOBVAL (7:1)
      END-EVALUATE
      EVALUATE TRUE
@@ -2621,6 +2633,9 @@
      IF  IMSG-TBMP(55) = 1
      AND IMSG-TPTR(55) > 0
      AND IMSG-TLEN(55) > 0
+*G.04.09 - nicht bei Fallback weiterleiten
+     AND NOT W-ERF-FALLBACK
+*G.04.09 - Ende
          MOVE   1   TO   W207-TBMP(55)
      END-IF
 *kl20170505 - G.03.00 - BMP55 ansetzen, falls vom Terminal
@@ -3653,7 +3668,9 @@
 
 *    Pruefen BMP 22 auf Gueltigkeit (Pos 7 = 05 = ICC)
 *G.04.02 - Kontaktlos Chip hier auch
-     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.04.09 - Fallback auch
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS OR W-ERF-FALLBACK
+*G.04.09 - Ende
 *G.04.02 - Ende
         IF IMSG-TBMP(14) = 1
            CONTINUE
@@ -3790,6 +3807,12 @@
 
 **  ---> BMP53  Sicherheitsverfahren
 **  --->        wird so zurück gegeben wie's gekommen ist
+
+*G.04.09 - bei Fallback BMP 55 nicht spiegeln
+     IF W-ERF-FALLBACK
+        MOVE ZERO TO IMSG-TBMP(55)
+     END-IF
+*G.04.09 - Ende
 
 **  ---> BMP64  dummy-MAC vorbereiten
 
@@ -4228,7 +4251,9 @@
 
 *kl20180315 - G.03.12 - Unterscheidung zwischen Chip und Spur2
 *G.04.02 - Kontaktlos Chip Karte beachten
-     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS
+*G.04.09 - Fallback auch beachten
+     IF W-ERF-CHIP OR W-ERF-KONTAKTLOS OR W-ERF-FALLBACK
+*G.04.09 - Ende
 *G.04.02 - Ende
 *       Kartenart = Chip ohne Cashback
         MOVE   211       TO KARTEN-ART     of TXILOG70
@@ -4244,6 +4269,11 @@
         WHEN 01 MOVE "ME"       TO TRANS-ART      of TXILOG70
         WHEN 02 MOVE "2E"       TO TRANS-ART      of TXILOG70
         WHEN 05 MOVE "OC"       TO TRANS-ART      of TXILOG70
+*G.04.09 für kontaktlos und Fallback erweitern
+        WHEN 07 MOVE "OC"       TO TRANS-ART      of TXILOG70
+        WHEN 91 MOVE "OC"       TO TRANS-ART      of TXILOG70
+        WHEN 80 MOVE "FE"       TO TRANS-ART      of TXILOG70
+*G.04.09 - Ende
         WHEN OTHER CONTINUE
      END-EVALUATE
 
